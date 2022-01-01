@@ -1,0 +1,18 @@
+name: candies_analyzer
+description: A sample command-line application.
+version: 1.0.0
+# homepage: https://www.example.com
+
+environment:
+  sdk: '>=2.17.6 <3.0.0'
+
+dependencies:
+  candies_analyzer_plugin: any
+  path: any
+  analyzer: any
+  analyzer_plugin: any
+dependency_overrides:
+ 
+dev_dependencies:
+  lints: any
+  test: any

@@ -10,6 +10,10 @@
 
 - [candies\_analyzer\_plugin](#candies_analyzer_plugin)
   - [描述](#描述)
+- [简单使用](#简单使用)
+  - [添加引用到 pubspec.yaml](#添加引用到-pubspecyaml)
+  - [增加插件到 analysis\_options.yaml](#增加插件到-analysis_optionsyaml)
+- [自定义你自己的分析插件](#自定义你自己的分析插件)
   - [模版创建](#模版创建)
   - [增添你的 lint](#增添你的-lint)
     - [启动插件](#启动插件)
@@ -49,6 +53,42 @@
 * [example](https://github.com/fluttercandies/candies_analyzer_plugin/example)
 
 * [analyzer_plugin 文档](https://github.com/dart-lang/sdk/blob/master/pkg/analyzer_plugin/doc/tutorial/tutorial.md)
+
+# 简单使用
+
+## 添加引用到 pubspec.yaml
+
+``` yaml
+dev_dependencies:
+  # zmtzawqlp  
+  candies_analyzer_plugin: any
+``` 
+
+## 增加插件到 analysis_options.yaml
+
+``` yaml
+analyzer:
+  # zmtzawqlp  
+  plugins:
+    candies_analyzer_plugin
+``` 
+
+默认的 lints 有如下这些:
+
+* prefer_asset_const
+* prefer_named_routes
+* prefer_safe_setState
+* must_call_super_dispose
+* must_call_super_dispose
+* perfer_doc_comments
+* prefer_singleton
+* good_doc_comments
+* prefer_trailing_comma
+
+更多的信息可以查看 [Default lints](#Default lints)
+
+
+# 自定义你自己的分析插件
   
 ## 模版创建
 
