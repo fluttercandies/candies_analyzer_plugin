@@ -10,6 +10,10 @@ The plugin to help create custom lint quickly.
 
 - [candies\_analyzer\_plugin](#candies_analyzer_plugin)
   - [Description](#description)
+- [simple use](#simple-use)
+  - [add into pubspec.yaml](#add-into-pubspecyaml)
+  - [add into analysis\_options.yaml](#add-into-analysis_optionsyaml)
+- [Custom your analyzer plugin](#custom-your-analyzer-plugin)
   - [Create Template](#create-template)
   - [Add your lint](#add-your-lint)
     - [start plugin](#start-plugin)
@@ -49,6 +53,43 @@ The plugin to help create custom lint quickly.
 * [example](https://github.com/fluttercandies/candies_analyzer_plugin/example)
 
 * [analyzer_plugin doc](https://github.com/dart-lang/sdk/blob/master/pkg/analyzer_plugin/doc/tutorial/tutorial.md)
+
+
+# simple use
+
+## add into pubspec.yaml
+
+``` yaml
+dev_dependencies:
+  # zmtzawqlp  
+  candies_analyzer_plugin: any
+``` 
+
+## add into analysis_options.yaml
+
+``` yaml
+analyzer:
+  # zmtzawqlp  
+  plugins:
+    candies_analyzer_plugin
+``` 
+
+default lints are following:
+
+* prefer_asset_const
+* prefer_named_routes
+* prefer_safe_setState
+* must_call_super_dispose
+* must_call_super_dispose
+* perfer_doc_comments
+* prefer_singleton
+* good_doc_comments
+* prefer_trailing_comma
+
+more info please check [Default lints](#Default lints)
+
+
+# Custom your analyzer plugin
 ## Create Template
 
 1. activate plugin
