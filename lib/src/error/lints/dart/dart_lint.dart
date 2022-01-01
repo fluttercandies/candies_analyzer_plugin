@@ -15,6 +15,7 @@ import 'package:candies_analyzer_plugin/src/extension.dart';
 import 'package:candies_analyzer_plugin/src/ignore_info.dart';
 import 'package:candies_analyzer_plugin/src/log.dart';
 import 'package:candies_analyzer_plugin/src/config.dart';
+import 'package:candies_analyzer_plugin/src/plugin.dart';
 
 /// The dart lint base
 abstract class DartLint extends CandyLint {
@@ -62,6 +63,7 @@ abstract class DartLint extends CandyLint {
   Stream<AnalysisErrorFixes> toDartAnalysisErrorFixesStream({
     required EditGetFixesParams parameters,
     required AnalysisContext analysisContext,
+    required CandiesAnalyzerPluginConfig config,
   }) async* {
     final List<DartAnalysisError>? errors =
         _cacheErrorsForFixes[parameters.file];
@@ -70,18 +72,20 @@ abstract class DartLint extends CandyLint {
         if (error.location.offset <= parameters.offset &&
             parameters.offset <=
                 error.location.offset + error.location.length) {
-          yield await toAnalysisErrorFixes(error: error);
+          yield await toAnalysisErrorFixes(
+            error: error,
+            config: config,
+          );
         }
       }
     }
   }
 
-  Future<AnalysisErrorFixes> toAnalysisErrorFixes(
-      {required DartAnalysisError error}) async {
-    List<SourceChange> fixes = await getDartFixes(
-      error.result,
-      error.astNode,
-    );
+  Future<AnalysisErrorFixes> toAnalysisErrorFixes({
+    required DartAnalysisError error,
+    required CandiesAnalyzerPluginConfig config,
+  }) async {
+    List<SourceChange> fixes = await getDartFixes(error, config);
 
     if (addIgnoreForThisLineFix) {
       fixes.add(await ignoreForThisLine(
@@ -158,8 +162,6 @@ abstract class DartLint extends CandyLint {
     required ResolvedUnitResult resolvedUnitResult,
     required String message,
     required void Function(DartFileEditBuilder builder) buildDartFileEdit,
-    // void Function(YamlFileEditBuilder builder)? buildYamlFileEdit,
-    // void Function(FileEditBuilder builder)? buildGenericFileEdit,
     ImportPrefixGenerator? importPrefixGenerator,
   }) async {
     final ChangeBuilderImpl changeBuilder =
@@ -177,8 +179,8 @@ abstract class DartLint extends CandyLint {
 
   /// Quick fix for lint
   Future<List<SourceChange>> getDartFixes(
-    ResolvedUnitResult resolvedUnitResult,
-    AstNode astNode,
+    DartAnalysisError error,
+    CandiesAnalyzerPluginConfig config,
   ) async =>
       <SourceChange>[];
 

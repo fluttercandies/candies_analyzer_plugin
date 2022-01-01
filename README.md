@@ -34,6 +34,9 @@ The plugin to help create custom lint quickly.
     - [MustCallSuperDispose](#mustcallsuperdispose)
     - [EndCallSuperDispose](#endcallsuperdispose)
     - [PerferDocComments](#perferdoccomments)
+    - [PreferSingleton](#prefersingleton)
+    - [GoodDocComments](#gooddoccomments)
+    - [PreferTrailingComma](#prefertrailingcomma)
   - [Completion](#completion)
     - [Make a custom completion](#make-a-custom-completion)
     - [Suggestions of Extension Member](#suggestions-of-extension-member)
@@ -196,9 +199,11 @@ class PerferCandiesClassPrefix extends DartLint {
 
   @override
   Future<List<SourceChange>> getDartFixes(
-    ResolvedUnitResult resolvedUnitResult,
-    AstNode astNode,
+    DartAnalysisError error,
+    CandiesAnalyzerPluginConfig config,
   ) async {
+    final ResolvedUnitResult resolvedUnitResult = error.result;
+    final AstNode astNode = error.astNode;
     // get name node
     final Token nameNode = (astNode as ClassDeclaration).name2;
     final String nameString = nameNode.toString();
@@ -663,6 +668,39 @@ The same like `public_member_api_docs`, but we can ignore lint or ignore file by
 class PerferDocComments extends DartLint {
   @override
   String get code => 'perfer_doc_comments';
+}
+```
+
+### PreferSingleton
+
+This is not a singleton, and new Object every time.
+ 
+``` dart
+class PreferSingleton extends DartLint {
+  @override
+  String get code => 'prefer_singleton';
+}
+```
+
+### GoodDocComments
+
+wrong comments format. (/// xxx) for public api and (// xxx) for other cases.
+ 
+``` dart
+class GoodDocComments extends DartLint {
+  @override
+  String get code => 'good_doc_comments';
+}
+```
+
+### PreferTrailingComma
+
+Prefer trailing comma for better code style.
+ 
+``` dart
+class PreferTrailingComma extends DartLint {
+  @override
+  String get code => 'prefer_trailing_comma';
 }
 ```
 

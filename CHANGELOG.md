@@ -1,6 +1,11 @@
-## 3.3.4
+## 4.0.0
 
-* add good_doc_comments 
+* add `good_doc_comments`
+* add `prefer_trailing_comma`
+* support to fix errors where possible in file, see `prefer_trailing_comma`.
+* breaking change: 
+  1. change method `getDartFixes(ResolvedUnitResult resolvedUnitResult,AstNode astNode,)` to  `getDartFixes(DartAnalysisError error,CandiesAnalyzerPluginConfig config,)`, you can get resolvedUnitResult and astNode from error, and get cache errors from config.
+  2. add CandiesAnalyzerPluginConfig config for `getYamlFixes` and `getGenericFixes`.
 
 ## 3.3.3
 
@@ -8,15 +13,15 @@
 
 ## 3.3.2
 
-* fix unused_file for part file
+* fix `unused_file` for part file
 
 ## 3.3.1
 
-* fix unused_file skip import file
+* fix `unused_file` skip import file
 
 ## 3.3.0
 
-* add unused_file
+* add `unused_file`
   
 ## 3.2.0
 

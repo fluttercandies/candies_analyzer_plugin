@@ -17,7 +17,7 @@ abstract class GenericLint extends CandyLint {
   Iterable<GenericAnalysisError> toGenericAnalysisErrors({
     required AnalysisContext analysisContext,
     required String path,
-    required CandiesAnalyzerPluginConfig? config,
+    required CandiesAnalyzerPluginConfig config,
     required String content,
     required LineInfo lineInfo,
   }) sync* {
@@ -59,6 +59,7 @@ abstract class GenericLint extends CandyLint {
   Stream<AnalysisErrorFixes> toGenericAnalysisErrorFixesStream({
     required EditGetFixesParams parameters,
     required AnalysisContext analysisContext,
+    required CandiesAnalyzerPluginConfig config,
   }) async* {
     final List<GenericAnalysisError>? errors =
         _cacheErrorsForFixes[parameters.file];
@@ -71,6 +72,7 @@ abstract class GenericLint extends CandyLint {
             error: error,
             path: parameters.file,
             analysisContext: analysisContext,
+            config: config,
           );
         }
       }
@@ -84,11 +86,13 @@ abstract class GenericLint extends CandyLint {
     required GenericAnalysisError error,
     required AnalysisContext analysisContext,
     required String path,
+    required CandiesAnalyzerPluginConfig config,
   }) async {
     List<SourceChange> fixes = await getGenericFixes(
       analysisContext,
       path,
       error,
+      config,
     );
 
     if (fixes.isNotEmpty) {
@@ -138,6 +142,7 @@ abstract class GenericLint extends CandyLint {
     AnalysisContext analysisContext,
     String path,
     GenericAnalysisError error,
+    CandiesAnalyzerPluginConfig config,
   ) async =>
       <SourceChange>[];
 
@@ -145,7 +150,7 @@ abstract class GenericLint extends CandyLint {
     required AnalysisContext analysisContext,
     required String path,
     required Location location,
-    required CandiesAnalyzerPluginConfig? config,
+    required CandiesAnalyzerPluginConfig config,
     required String content,
   }) {
     CandiesAnalyzerPluginLogger().log(
@@ -153,7 +158,7 @@ abstract class GenericLint extends CandyLint {
       root: analysisContext.root,
     );
     return GenericAnalysisError(
-      config?.getSeverity(this) ?? severity,
+      config.getSeverity(this),
       type,
       location,
       message,

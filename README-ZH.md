@@ -34,6 +34,9 @@
     - [MustCallSuperDispose](#mustcallsuperdispose)
     - [EndCallSuperDispose](#endcallsuperdispose)
     - [PerferDocComments](#perferdoccomments)
+    - [PreferSingleton](#prefersingleton)
+    - [GoodDocComments](#gooddoccomments)
+    - [PreferTrailingComma](#prefertrailingcomma)
   - [Completion](#completion)
     - [Make a custom completion](#make-a-custom-completion)
     - [扩展方法提示](#扩展方法提示)
@@ -178,7 +181,8 @@ class PerferCandiesClassPrefix extends DartLint {
   String get code => 'perfer_candies_class_prefix';
 
   @override
-  String? get url => 'https://github.com/fluttercandies/candies_analyzer_plugin';
+  String? get url =>
+      'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   @override
   SyntacticEntity? matchLint(AstNode node) {
@@ -197,34 +201,90 @@ class PerferCandiesClassPrefix extends DartLint {
 
   @override
   Future<List<SourceChange>> getDartFixes(
-    ResolvedUnitResult resolvedUnitResult,
-    AstNode astNode,
+    DartAnalysisError error,
+    CandiesAnalyzerPluginConfig config,
   ) async {
-    // get name node
-    final Token nameNode = (astNode as ClassDeclaration).name2;
-    final String nameString = nameNode.toString();
+    final ResolvedUnitResult resolvedUnitResult = error.result;
+
+    final Iterable<DartAnalysisError> cacheErrors = config
+        .getCacheErrors(resolvedUnitResult.path, code: code)
+        .whereType<DartAnalysisError>();
+
+    final Map<DartAnalysisError, Set<SyntacticEntity>> references =
+        _findClassReferences(cacheErrors, resolvedUnitResult);
+
     return <SourceChange>[
       await getDartFix(
         resolvedUnitResult: resolvedUnitResult,
         message: 'Use Candies as a class prefix.',
         buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
-          final int startIndex = _getClassNameStartIndex(nameString);
-
-          final RegExp regExp = RegExp(nameString);
-
-          final String replace =
-              '${nameString.substring(0, startIndex)}Candies${nameString.substring(startIndex)}';
-
-          for (final Match match
-              in regExp.allMatches(resolvedUnitResult.content)) {
-            dartFileEditBuilder.addSimpleReplacement(
-                SourceRange(match.start, match.end - match.start), replace);
-          }
-
+          _fix(
+            error,
+            resolvedUnitResult,
+            dartFileEditBuilder,
+            references[error]!,
+          );
           dartFileEditBuilder.formatAll(resolvedUnitResult.unit);
         },
-      )
+      ),
+      if (cacheErrors.length > 1)
+        await getDartFix(
+          resolvedUnitResult: resolvedUnitResult,
+          message: 'Use Candies as a class prefix where possible in file.',
+          buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
+            for (final DartAnalysisError error in cacheErrors) {
+              _fix(
+                error,
+                resolvedUnitResult,
+                dartFileEditBuilder,
+                references[error]!,
+              );
+            }
+            dartFileEditBuilder.formatAll(resolvedUnitResult.unit);
+          },
+        ),
     ];
+  }
+
+  void _fix(
+    DartAnalysisError error,
+    ResolvedUnitResult resolvedUnitResult,
+    DartFileEditBuilder dartFileEditBuilder,
+    Set<SyntacticEntity> references,
+  ) {
+    final AstNode astNode = error.astNode;
+    // get name node
+    final Token nameNode = (astNode as ClassDeclaration).name2;
+    final String nameString = nameNode.lexeme;
+
+    final int startIndex = _getClassNameStartIndex(nameString);
+    final String replace =
+        '${nameString.substring(0, startIndex)}Candies${nameString.substring(startIndex)}';
+
+    for (final SyntacticEntity match in references) {
+      dartFileEditBuilder.addSimpleReplacement(
+          SourceRange(match.offset, match.length), replace);
+    }
+  }
+
+  Map<DartAnalysisError, Set<SyntacticEntity>> _findClassReferences(
+    Iterable<DartAnalysisError> errors,
+    ResolvedUnitResult resolvedUnitResult,
+  ) {
+    final Map<DartAnalysisError, Set<SyntacticEntity>> references =
+        <DartAnalysisError, Set<SyntacticEntity>>{};
+    final Map<String, DartAnalysisError> classNames =
+        <String, DartAnalysisError>{};
+
+    for (final DartAnalysisError error in errors) {
+      classNames[(error.astNode as ClassDeclaration).name2.lexeme] = error;
+      references[error] = <SyntacticEntity>{};
+    }
+
+    resolvedUnitResult.unit
+        .accept(_FindClassReferenceVisitor(references, classNames));
+
+    return references;
   }
 
   int _getClassNameStartIndex(String nameString) {
@@ -236,6 +296,24 @@ class PerferCandiesClassPrefix extends DartLint {
       }
     }
     return index;
+  }
+}
+
+class _FindClassReferenceVisitor extends GeneralizingAstVisitor<void> {
+  _FindClassReferenceVisitor(this.references, this.classNames);
+  final Map<DartAnalysisError, Set<SyntacticEntity>> references;
+  final Map<String, DartAnalysisError> classNames;
+
+  @override
+  void visitNode(AstNode node) {
+    if (node.childEntities.length == 1) {
+      final String source = node.toSource();
+      if (classNames.keys.contains(source)) {
+        references[classNames[source]]!.add(node);
+        return;
+      }
+    }
+    super.visitNode(node);
   }
 }
 ```
@@ -667,6 +745,39 @@ https://dart.dev/guides/language/effective-dart/documentation
 class PerferDocComments extends DartLint {
   @override
   String get code => 'perfer_doc_comments';
+}
+```
+
+### PreferSingleton
+
+这不是一个单例，但是每次都被创建使用。
+ 
+``` dart
+class PreferSingleton extends DartLint {
+  @override
+  String get code => 'prefer_singleton';
+}
+```
+
+### GoodDocComments
+
+错误的注释格式。公共 api 使用 (/// xxx)， 其他情况使用 (// xxx)。
+ 
+``` dart
+class GoodDocComments extends DartLint {
+  @override
+  String get code => 'good_doc_comments';
+}
+```
+
+### PreferTrailingComma
+
+为了更好的代码格式，在结尾增加逗号。
+ 
+``` dart
+class PreferTrailingComma extends DartLint {
+  @override
+  String get code => 'prefer_trailing_comma';
 }
 ```
 

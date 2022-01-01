@@ -24,6 +24,7 @@ import 'package:analyzer/src/util/file_paths.dart' as file_paths;
 
 import 'error/lints/dart/unused_file.dart';
 import 'log.dart';
+
 part 'ast_visitor.dart';
 
 /// The class to handle pubspec.yaml and analysis_options.yaml
@@ -224,6 +225,7 @@ class CandiesAnalyzerPluginConfig {
         yield* lint.toDartAnalysisErrorFixesStream(
           parameters: parameters,
           analysisContext: analysisContext,
+          config: this,
         );
       }
     } else if (isYamlFile(file)) {
@@ -231,6 +233,7 @@ class CandiesAnalyzerPluginConfig {
         yield* lint.toYamlAnalysisErrorFixesStream(
           parameters: parameters,
           analysisContext: analysisContext,
+          config: this,
         );
       }
     } else {
@@ -238,6 +241,7 @@ class CandiesAnalyzerPluginConfig {
         yield* lint.toGenericAnalysisErrorFixesStream(
           parameters: parameters,
           analysisContext: analysisContext,
+          config: this,
         );
       }
     }
@@ -259,29 +263,44 @@ class CandiesAnalyzerPluginConfig {
     }
   }
 
-  Iterable<AnalysisError> getAllCacheErrors() sync* {
-    for (final DartLint dartLint in _dartLints) {
-      yield* dartLint.getAllCacheErrors();
+  Iterable<AnalysisError> getAllCacheErrors({String? code}) sync* {
+    for (final DartLint lint in _dartLints) {
+      if (code != null && lint.code != code) {
+        continue;
+      }
+      yield* lint.getAllCacheErrors();
     }
 
     for (final YamlLint lint in yamlLints) {
+      if (code != null && lint.code != code) {
+        continue;
+      }
       yield* lint.getAllCacheErrors();
     }
 
     for (final GenericLint lint in genericLints) {
+      if (code != null && lint.code != code) {
+        continue;
+      }
       yield* lint.getAllCacheErrors();
     }
   }
 
-  Iterable<AnalysisError> getCacheErrors(String path) sync* {
-    for (final DartLint dartLint in _dartLints) {
-      final List<AnalysisError>? errors = dartLint.getCacheErrors(path);
+  Iterable<AnalysisError> getCacheErrors(String path, {String? code}) sync* {
+    for (final DartLint lint in _dartLints) {
+      if (code != null && lint.code != code) {
+        continue;
+      }
+      final List<AnalysisError>? errors = lint.getCacheErrors(path);
       if (errors != null) {
         yield* errors;
       }
     }
 
     for (final YamlLint lint in yamlLints) {
+      if (code != null && lint.code != code) {
+        continue;
+      }
       final List<AnalysisError>? errors = lint.getCacheErrors(path);
       if (errors != null) {
         yield* errors;
@@ -289,6 +308,9 @@ class CandiesAnalyzerPluginConfig {
     }
 
     for (final GenericLint lint in genericLints) {
+      if (code != null && lint.code != code) {
+        continue;
+      }
       final List<AnalysisError>? errors = lint.getCacheErrors(path);
       if (errors != null) {
         yield* errors;

@@ -12,7 +12,7 @@ abstract class YamlLint extends CandyLint {
   Iterable<YamlAnalysisError> toYamlAnalysisErrors({
     required AnalysisContext analysisContext,
     required String path,
-    required CandiesAnalyzerPluginConfig? config,
+    required CandiesAnalyzerPluginConfig config,
     required YamlNode root,
     required String content,
     required LineInfo lineInfo,
@@ -56,6 +56,7 @@ abstract class YamlLint extends CandyLint {
   Stream<AnalysisErrorFixes> toYamlAnalysisErrorFixesStream({
     required EditGetFixesParams parameters,
     required AnalysisContext analysisContext,
+    required CandiesAnalyzerPluginConfig config,
   }) async* {
     final List<YamlAnalysisError>? errors =
         _cacheErrorsForFixes[parameters.file];
@@ -68,6 +69,7 @@ abstract class YamlLint extends CandyLint {
             error: error,
             path: parameters.file,
             analysisContext: analysisContext,
+            config: config,
           );
         }
       }
@@ -81,11 +83,13 @@ abstract class YamlLint extends CandyLint {
     required YamlAnalysisError error,
     required AnalysisContext analysisContext,
     required String path,
+    required CandiesAnalyzerPluginConfig config,
   }) async {
     List<SourceChange> fixes = await getYamlFixes(
       analysisContext,
       path,
       error,
+      config,
     );
 
     if (fixes.isNotEmpty) {
@@ -135,6 +139,7 @@ abstract class YamlLint extends CandyLint {
     AnalysisContext analysisContext,
     String path,
     YamlAnalysisError error,
+    CandiesAnalyzerPluginConfig config,
   ) async =>
       <SourceChange>[];
 

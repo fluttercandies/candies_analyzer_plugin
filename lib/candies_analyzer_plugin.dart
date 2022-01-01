@@ -16,6 +16,8 @@ export 'src/error/lints/dart/prefer_safe_set_state.dart';
 export 'src/error/lints/dart/perfer_doc_comments.dart';
 export 'src/error/lints/dart/unused_file.dart';
 export 'src/error/lints/dart/perfer_singleton.dart';
+export 'src/error/lints/dart/good_doc_comments.dart';
+export 'src/error/lints/dart/prefer_trailing_comma.dart';
 export 'src/error/lints/generic_lint.dart';
 export 'src/error/lints/dart/util/analyzer.dart';
 export 'src/error/lints/dart/util/ast.dart';
