@@ -1,7 +1,7 @@
 // ignore_for_file: implementation_imports
 
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:_fe_analyzer_shared/src/base/syntactic_entity.dart';
+import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 
