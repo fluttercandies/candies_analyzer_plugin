@@ -294,8 +294,11 @@ class CandiesAnalyzerPlugin extends ServerPlugin
         root: root,
       );
 
-      final List<AnalysisErrorFixes> fixes =
-          await getAnalysisErrorFixes(config, parameters, context).toList();
+      final List<AnalysisErrorFixes> fixes = await getAnalysisErrorFixes(
+        config,
+        parameters,
+        context,
+      ).toList();
 
       CandiesAnalyzerPluginLogger().log(
         'get total ${fixes.length} fixes for $path',

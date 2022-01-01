@@ -118,4 +118,16 @@ mixin CandiesAnalyzerPluginBase on ServerPlugin {
     }
     return map;
   }
+
+  Iterable<AnalysisError> getAllCacheErrors({String? code}) sync* {
+    for (final CandiesAnalyzerPluginConfig config in _configs.values) {
+      yield* config.getAllCacheErrors(code: code);
+    }
+  }
+
+  Iterable<AnalysisError> getCacheErrors(String path, {String? code}) sync* {
+    for (final CandiesAnalyzerPluginConfig config in _configs.values) {
+      yield* config.getCacheErrors(path, code: code);
+    }
+  }
 }

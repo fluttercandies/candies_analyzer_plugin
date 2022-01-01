@@ -242,6 +242,7 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
   Stream<AnalysisErrorFixes> toDartAnalysisErrorFixesStream({
     required EditGetFixesParams parameters,
     required AnalysisContext analysisContext,
+    required CandiesAnalyzerPluginConfig config,
   }) async* {
     final Set<String> unusedFiles = _usedDartFiles.keys.toSet();
     if (unusedFiles.isNotEmpty) {
@@ -265,7 +266,10 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
             'unused_file get fix: ${parameters.file}',
             root: analysisContext.root,
           );
-          yield await toAnalysisErrorFixes(error: error);
+          yield await toAnalysisErrorFixes(
+            error: error,
+            config: config,
+          );
         }
       }
     }

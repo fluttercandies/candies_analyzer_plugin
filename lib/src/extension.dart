@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/source/error_processor.dart';
+import 'package:analyzer/source/line_info.dart';
 import 'package:analyzer/source/source_range.dart';
-import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:analyzer_plugin/protocol/protocol_common.dart' hide Element;
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
 import 'package:path/path.dart' as path;
@@ -117,4 +119,27 @@ extension LibraryElementE on LibraryElement {
     }
     return false;
   }
+}
+
+extension ElementE on Element {
+  bool get isInFlutterSdk {
+    if (library == null) {
+      return false;
+    }
+    return library!.isInFlutterSdk;
+  }
+
+  bool get isInSdk {
+    if (library == null) {
+      return false;
+    }
+    return library!.isInSdk;
+  }
+}
+
+extension SyntacticEntityE on SyntacticEntity {
+  int startLineNumber(LineInfo lineInfo) =>
+      lineInfo.getLocation(offset).lineNumber;
+
+  int endLineNumber(LineInfo lineInfo) => lineInfo.getLocation(end).lineNumber;
 }

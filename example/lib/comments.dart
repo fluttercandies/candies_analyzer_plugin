@@ -24,12 +24,11 @@ class TestC {
   int i = 1;
 }
 
-/**
- * This is TestD
- *
- *
- *
- *  */
+/// This is TestD
+///
+///
+///
+///  */
 class TestD {
   /* This is D i */
   int i = 1;
