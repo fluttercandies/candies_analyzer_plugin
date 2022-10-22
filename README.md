@@ -107,11 +107,11 @@ Properties:
 | --- | --- | --- |
 | code | The name, as a string, of the error code associated with this error. | required | 
 | message | The message to be displayed for this error. The message should indicate what is wrong with the code and why it is wrong. | required | 
-| url | The URL of a page containing documentation associated with this error. | - | 
-| type | The type of the error. | CHECKED_MODE_COMPILE_TIME_ERROR,COMPILE_TIME_ERROR,HINT,LINT,STATIC_TYPE_WARNING,STATIC_WARNING,SYNTACTIC_ERROR,TODO. The default is LINT. | 
-| severity | The severity of the error. | INFO,WARNING,ERROR.  The default is INFO. | 
-| correction | The correction message to be displayed for this error. The correction message should indicate how the user can fix the error. The field is omitted if there is no correction message associated with the error code. | - | 
-| contextMessages | Additional messages associated with this diagnostic that provide context to help the user understand the diagnostic. | - | 
+| url | The URL of a page containing documentation associated with this error. |  | 
+| type | The type of the error. <br/>CHECKED_MODE_COMPILE_TIME_ERROR<br/>COMPILE_TIME_ERROR<br/>HINT<br/>LINT<br/>STATIC_TYPE_WARNING<br/>STATIC_WARNING<br/>SYNTACTIC_ERROR<br/>TODO | The default is LINT. | 
+| severity | The severity of the error.<br/>INFO<br/>WARNING<br/>ERROR | The default is INFO. | 
+| correction | The correction message to be displayed for this error. The correction message should indicate how the user can fix the error. The field is omitted if there is no correction message associated with the error code. |  | 
+| contextMessages | Additional messages associated with this diagnostic that provide context to help the user understand the diagnostic. |  | 
 
 
 Important methodes:
@@ -319,24 +319,24 @@ Under the project  `custom_lint.log` will be generated.
 
 3. log info
    
-   ``` dart
+``` dart
    CandiesLintsLogger().log(
         'info',
         // which location custom_lint.log will be generated
         root: result.root,
       );
-   ```
+```
 
 4. log error
 
-   ``` dart
+``` dart
    CandiesLintsLogger().logError(
      'analyze file failed:',
      root: analysisContext.root,
      error: e,
      stackTrace: stackTrace,
    );
-   ```
+```
 ## Note 
 
 
