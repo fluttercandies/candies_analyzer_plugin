@@ -8,6 +8,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dar
 import 'package:candies_lints/src/extension.dart';
 import 'lint.dart';
 
+/// The 'perfer_class_prefix' lint
 class PerferClassPrefix extends CandyLint {
   PerferClassPrefix(this.prefix);
 

@@ -21,7 +21,9 @@ The plugin to help create custom lint quickly.
   - [Log](#log)
   - [Note](#note)
 
+* [example](https://github.com/fluttercandies/candies_lints/example)
 
+* [analyzer_plugin doc](https://github.com/dart-lang/sdk/blob/master/pkg/analyzer_plugin/doc/tutorial/tutorial.md)
 ## Create Template
 
 1. activate plugin
@@ -341,6 +343,6 @@ Under the project  `custom_lint.log` will be generated.
 1. don't write `print` in plugin, analysis server will crash.
 2. you must add `custom_lint` into dev_dependencies in `pubspec.yaml` and add `custom_lint` into analyzer plugins in `analysis_options.yaml` which package or project you want to analysis.
 
-[full example](https://github.com/fluttercandies/candies_lints/example)
+
 
 

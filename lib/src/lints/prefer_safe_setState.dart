@@ -7,6 +7,7 @@ import 'package:candies_lints/src/extension.dart';
 
 import 'lint.dart';
 
+/// The 'prefer_safe_setState' lint
 class PerferSafeSetState extends CandyLint {
   @override
   String get code => 'prefer_safe_setState';

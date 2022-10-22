@@ -3,6 +3,7 @@ import 'package:analyzer/dart/ast/syntactic_entity.dart';
 
 import 'lint.dart';
 
+/// The 'prefer_asset_const' lint
 class PreferAssetConst extends CandyLint {
   @override
   String get code => 'prefer_asset_const';

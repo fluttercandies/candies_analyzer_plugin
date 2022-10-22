@@ -4,12 +4,17 @@ import 'package:logger/src/outputs/file_output.dart';
 import 'dart:io' as io;
 import 'package:path/path.dart' as path;
 
+/// The logger for this plugin
 class CandiesLintsLogger {
   factory CandiesLintsLogger() => _candiesLintsLogger;
   CandiesLintsLogger._();
   static final CandiesLintsLogger _candiesLintsLogger = CandiesLintsLogger._();
   final Map<String, Logger> _loggers = <String, Logger>{};
+
+  /// The name of log file
   String logFileName = 'candies_lints';
+
+  /// whether should log
   bool shouldLog = true;
   void _init(String root) {
     if (shouldLog) {
@@ -33,6 +38,7 @@ class CandiesLintsLogger {
     }
   }
 
+  /// Log info
   void log(
     dynamic message, {
     required String root,
@@ -43,6 +49,7 @@ class CandiesLintsLogger {
     _loggers[root]?.d(message, error, stackTrace);
   }
 
+  /// Log error
   void logError(
     dynamic message, {
     required String root,

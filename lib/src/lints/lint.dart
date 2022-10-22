@@ -14,6 +14,7 @@ import 'package:candies_lints/src/extension.dart';
 import 'package:candies_lints/src/ignore_info.dart';
 import 'package:candies_lints/src/log.dart';
 
+/// The lint base
 abstract class CandyLint {
   /// The severity of the error.
   AnalysisErrorSeverity get severity => AnalysisErrorSeverity.INFO;

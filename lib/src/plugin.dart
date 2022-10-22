@@ -32,9 +32,7 @@ import 'package:analyzer/error/error.dart' as error;
 import 'ast_visitor.dart';
 import 'log.dart';
 
-class CandiesLintsPlugin extends ServerPlugin
-//with FixesMixin, DartFixesMixin
-{
+class CandiesLintsPlugin extends ServerPlugin {
   CandiesLintsPlugin({
     AstVisitorBase? astVisitor,
     List<CandyLint>? lints,
@@ -47,31 +45,50 @@ class CandiesLintsPlugin extends ServerPlugin
     this.astVisitor._lints = this.lints;
     CandiesLintsLogger().logFileName = logFileName ?? 'candies_lints';
   }
+
+  /// AstVisitor to check lint
   final AstVisitorBase astVisitor;
+
+  /// The lints to be used to analyze files
   final List<CandyLint> lints;
 
+  /// The default lints.
   static List<CandyLint> defaultLints = <CandyLint>[
     PreferAssetConst(),
     PreferNamedRoutes(),
     PerferSafeSetState(),
   ];
 
+  /// Return the user visible name of this plugin.
   @override
   final String name;
 
+  /// Return the version number of the plugin spec required by this plugin,
+  /// encoded as a string.
   @override
   String get version => '1.0.0';
 
+  /// Return a list of glob patterns selecting the files that this plugin is
+  /// interested in analyzing.
   @override
   List<String> get fileGlobsToAnalyze => const <String>['**/*.dart'];
 
+  /// Return the user visible information about how to contact the plugin authors
+  /// with any problems that are found, or `null` if there is no contact info.
   @override
   String get contactInfo => 'https://github.com/fluttercandies/candies_lints';
 
+  /// whether should analyze this file
   bool shouldAnalyzeFile(String path) {
     return path.endsWith('.dart') && !path.endsWith('.g.dart');
   }
 
+  /// Handles files that might have been affected by a content change of
+  /// one or more files. The implementation may check if these files should
+  /// be analyzed, do such analysis, and send diagnostics.
+  ///
+  /// By default invokes [analyzeFiles] only for files that are analyzed in
+  /// this [analysisContext].
   @override
   Future<void> handleAffectedFiles(
       {required AnalysisContext analysisContext, required List<String> paths}) {
@@ -88,6 +105,9 @@ class CandiesLintsPlugin extends ServerPlugin
         .handleAffectedFiles(analysisContext: analysisContext, paths: paths);
   }
 
+  /// Analyzes the given files.
+  /// By default invokes [analyzeFile] for every file.
+  /// Implementations may override to optimize for batch analysis.
   @override
   Future<void> analyzeFile(
       {required AnalysisContext analysisContext, required String path}) async {
@@ -132,6 +152,7 @@ class CandiesLintsPlugin extends ServerPlugin
     }
   }
 
+  /// Return AnalysisError List base on ResolvedUnitResult.
   List<AnalysisError> getErrorsFromResult(ResolvedUnitResult unitResult) {
     unitResult.unit.visitChildren(astVisitor);
     final CandiesLintsIgnoreInfo ignore =
@@ -145,6 +166,9 @@ class CandiesLintsPlugin extends ServerPlugin
     return errors;
   }
 
+  /// Handle an 'edit.getFixes' request.
+  ///
+  /// Throw a [RequestFailure] if the request could not be handled.
   @override
   Future<EditGetFixesResult> handleEditGetFixes(
       EditGetFixesParams parameters) async {
@@ -185,41 +209,6 @@ class CandiesLintsPlugin extends ServerPlugin
 
     return EditGetFixesResult(const <AnalysisErrorFixes>[]);
   }
-
-  // @override
-  // List<FixContributor> getFixContributors(String path) {
-  //   return <FixContributor>[MyFixContributor()];
-  // }
-
-  // @override
-  // Future<EditGetFixesResult> handleEditGetFixes(
-  //     EditGetFixesParams parameters) async {
-  //   var path = parameters.file;
-  //   var request = await getFixesRequest(parameters);
-  //   var generator = FixGenerator(getFixContributors(path));
-  //   var result = await generator.generateFixesResponse(request);
-  //   result.sendNotifications(channel);
-  //   return result.result;
-  // }
-
-  // @override
-  // Future<FixesRequest> getFixesRequest(EditGetFixesParams parameters) async {
-  //   var path = parameters.file;
-  //   var offset = parameters.offset;
-  //   var result = await getResolvedUnitResult(path);
-  //   CandiesLintsLogger().log('start get fixes for $path', root: result.root);
-  //   return DartFixesRequestImpl(
-  //       resourceProvider, offset, _getErrors(offset, result), result);
-  // }
-
-  // List<error.AnalysisError> _getErrors(int offset, ResolvedUnitResult result) {
-  //   var lineInfo = result.lineInfo;
-  //   var offsetLine = lineInfo.getLocation(offset).lineNumber;
-  //   return result.errors.where((error.AnalysisError error) {
-  //     var errorLine = lineInfo.getLocation(error.offset).lineNumber;
-  //     return errorLine == offsetLine;
-  //   }).toList();
-  // }
 }
 
 /// AstVisitor to check lint

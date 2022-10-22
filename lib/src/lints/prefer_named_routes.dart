@@ -3,6 +3,7 @@ import 'package:analyzer/dart/ast/syntactic_entity.dart';
 
 import 'lint.dart';
 
+/// The 'prefer_named_routes' lint
 class PreferNamedRoutes extends CandyLint {
   @override
   String get code => 'prefer_named_routes';

@@ -8,6 +8,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dar
 import 'package:analyzer/src/ignore_comments/ignore_info.dart';
 import 'extension.dart';
 
+/// The class to help ignore error
 class CandiesLintsIgnoreInfo {
   CandiesLintsIgnoreInfo.forDart(this.result) {
     final String content = result.content;
@@ -68,6 +69,7 @@ class CandiesLintsIgnoreInfo {
 
   String _toLowerCase(String code) => code.trim().toLowerCase();
 
+  /// The builder of ignore for this file.
   void fixIgnoreForThisFile(
     String code, {
     DartFileEditBuilder? dartFileEditBuilder,
@@ -84,6 +86,7 @@ class CandiesLintsIgnoreInfo {
     dartFileEditBuilder?.formatAll(result.unit);
   }
 
+  /// The builder of ignore for this line.
   void fixIgnoreForThisLine(
     String code,
     Location location, {
