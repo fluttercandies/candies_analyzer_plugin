@@ -1,4 +1,3 @@
-import 'dart:isolate';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
@@ -6,30 +5,16 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_lints/src/extension.dart';
+import 'lint.dart';
 
-CandiesLintsPlugin get plugin => CandiesLintsPlugin(
-      name: 'custom_lint',
-      logFileName: 'custom_lint',
-      lints: <CandyLint>[
-        // add your line here
-        PerferCandiesClassPrefix(),
-        ...CandiesLintsPlugin.defaultLints,
-      ],
-    );
+class PerferClassPrefix extends CandyLint {
+  PerferClassPrefix(this.prefix);
 
-// This file must be 'plugin.dart'
-void main(List<String> args, SendPort sendPort) {
-  CandiesLintsStarter.start(
-    args,
-    sendPort,
-    plugin: plugin,
-  );
-}
+  final String prefix;
 
-class PerferCandiesClassPrefix extends CandyLint {
   @override
-  String get code => 'perfer_candies_class_prefix';
+  String get code => 'perfer_${prefix}_class_prefix';
 
   @override
   String? get url => 'https://github.com/fluttercandies/candies_lints';
@@ -39,7 +24,7 @@ class PerferCandiesClassPrefix extends CandyLint {
     if (node is ClassDeclaration) {
       final String name = node.name2.toString();
       final int startIndex = _getClassNameStartIndex(name);
-      if (!name.substring(startIndex).startsWith('Candies')) {
+      if (!name.substring(startIndex).startsWith(prefix)) {
         return node.name2;
       }
     }
@@ -47,7 +32,7 @@ class PerferCandiesClassPrefix extends CandyLint {
   }
 
   @override
-  String get message => 'Define a class name start with Candies';
+  String get message => 'Define a class name start with $prefix';
 
   @override
   Future<List<SourceChange>> getFixes(
@@ -60,14 +45,14 @@ class PerferCandiesClassPrefix extends CandyLint {
     return <SourceChange>[
       await getFix(
         resolvedUnitResult: resolvedUnitResult,
-        message: 'Use Candies as a class prefix.',
+        message: 'Use $prefix as a class prefix.',
         buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
           final int startIndex = _getClassNameStartIndex(nameString);
 
           final RegExp regExp = RegExp(nameString);
 
           final String replace =
-              '${nameString.substring(0, startIndex)}Candies${nameString.substring(startIndex)}';
+              '${nameString.substring(0, startIndex)}$prefix${nameString.substring(startIndex)}';
 
           for (final Match match
               in regExp.allMatches(resolvedUnitResult.content)) {

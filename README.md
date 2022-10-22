@@ -136,7 +136,7 @@ class PerferCandiesClassPrefix extends CandyLint {
   SyntacticEntity? matchLint(AstNode node) {
     if (node is ClassDeclaration) {
       final String name = node.name2.toString();
-      int startIndex = _getClassNameStartIndex(name);
+      final int startIndex = _getClassNameStartIndex(name);
       if (!name.substring(startIndex).startsWith('Candies')) {
         return node.name2;
       }
@@ -153,21 +153,22 @@ class PerferCandiesClassPrefix extends CandyLint {
     AstNode astNode,
   ) async {
     // get name node
-    Token nameNode = (astNode as ClassDeclaration).name2;
-    String nameString = nameNode.toString();
+    final Token nameNode = (astNode as ClassDeclaration).name2;
+    final String nameString = nameNode.toString();
     return <SourceChange>[
       await getFix(
         resolvedUnitResult: resolvedUnitResult,
         message: 'Use Candies as a class prefix.',
         buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
-          int startIndex = _getClassNameStartIndex(nameString);
+          final int startIndex = _getClassNameStartIndex(nameString);
 
-          RegExp regExp = RegExp(nameString);
+          final RegExp regExp = RegExp(nameString);
 
-          String replace =
+          final String replace =
               '${nameString.substring(0, startIndex)}Candies${nameString.substring(startIndex)}';
 
-          for (Match match in regExp.allMatches(resolvedUnitResult.content)) {
+          for (final Match match
+              in regExp.allMatches(resolvedUnitResult.content)) {
             dartFileEditBuilder.addSimpleReplacement(
                 SourceRange(match.start, match.end - match.start), replace);
           }
@@ -190,9 +191,6 @@ class PerferCandiesClassPrefix extends CandyLint {
   }
 }
 ```
-
-
-
 ## Debug
 
 
