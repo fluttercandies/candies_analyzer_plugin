@@ -1,8 +1,12 @@
 import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/error/error.dart';
+import 'package:analyzer/source/error_processor.dart';
 import 'package:analyzer/source/source_range.dart';
+import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
+import 'package:candies_lints/candies_lints.dart';
 
 /// The extension for ResolvedUnitResult
 extension ResolvedUnitResultE on ResolvedUnitResult {
@@ -23,4 +27,30 @@ extension AnalysisContextE on AnalysisContext {
 extension DartFileEditBuilderE on DartFileEditBuilder {
   /// Format all content
   void formatAll(CompilationUnit unit) => format(SourceRange(0, unit.end));
+}
+
+extension ErrorProcessorE on ErrorProcessor {
+  /// If severity is `null`, this processor will "filter" the associated error code.
+  bool get filtered => severity == null;
+
+  bool ignore(CandyLint lint) {
+    return same(lint) && filtered;
+  }
+
+  AnalysisErrorSeverity getSeverity(CandyLint lint) {
+    if (same(lint) && !filtered) {
+      switch (severity) {
+        case ErrorSeverity.INFO:
+          return AnalysisErrorSeverity.INFO;
+        case ErrorSeverity.WARNING:
+          return AnalysisErrorSeverity.WARNING;
+        case ErrorSeverity.ERROR:
+          return AnalysisErrorSeverity.ERROR;
+        default:
+      }
+    }
+    return lint.severity;
+  }
+
+  bool same(CandyLint lint) => lint.code.toUpperCase() == code;
 }

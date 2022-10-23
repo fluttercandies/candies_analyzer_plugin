@@ -8,15 +8,7 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_lints/candies_lints.dart';
 
-CandiesLintsPlugin get plugin => CandiesLintsPlugin(
-      name: 'custom_lint',
-      logFileName: 'custom_lint',
-      lints: <CandyLint>[
-        // add your line here
-        PerferCandiesClassPrefix(),
-        ...CandiesLintsPlugin.defaultLints,
-      ],
-    );
+CandiesLintsPlugin get plugin => CustomLintPlugin();
 
 // This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
@@ -25,6 +17,17 @@ void main(List<String> args, SendPort sendPort) {
     sendPort,
     plugin: plugin,
   );
+}
+
+class CustomLintPlugin extends CandiesLintsPlugin {
+  @override
+  String get name => 'custom_lint';
+  @override
+  List<CandyLint> get lints => <CandyLint>[
+        // add your line here
+        PerferCandiesClassPrefix(),
+        ...super.lints,
+      ];
 }
 
 class PerferCandiesClassPrefix extends CandyLint {

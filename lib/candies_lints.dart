@@ -1,7 +1,6 @@
 library candies_lints;
 
 export 'src/plugin_starter.dart';
-export 'src/ast_visitor.dart';
 export 'src/plugin.dart';
 export 'src/lints/lint.dart';
 export 'src/lints/perfer_class_prefix.dart';

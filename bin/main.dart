@@ -67,15 +67,7 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_lints/candies_lints.dart';
 
-CandiesLintsPlugin get plugin => CandiesLintsPlugin(
-      name: 'custom_lint',
-      logFileName: 'custom_lint',
-      lints: <CandyLint>[
-        // add your line here
-        PerferCandiesClassPrefix(),
-        ...CandiesLintsPlugin.defaultLints,
-      ],
-    );
+CandiesLintsPlugin get plugin => CustomLintPlugin();
 
 // This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
@@ -84,6 +76,17 @@ void main(List<String> args, SendPort sendPort) {
     sendPort,
     plugin: plugin,
   );
+}
+
+class CustomLintPlugin extends CandiesLintsPlugin {
+  @override
+  String get name => '{0}';
+  @override
+  List<CandyLint> get lints => <CandyLint>[
+        // add your line here
+        PerferCandiesClassPrefix(),
+        ...super.lints,
+      ];
 }
 
 class PerferCandiesClassPrefix extends CandyLint {
@@ -175,6 +178,7 @@ dev_dependencies:
 ''';
 
 const String debugDemo = '''
+import 'dart:io';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
@@ -182,13 +186,14 @@ import 'plugin.dart';
 import 'package:path/path.dart' as path;
 
 Future<void> main(List<String> args) async {
-  final String debugFilePath =
-      path.join('your project root', 'lib', 'main.dart');
+  final String debugFilePath = path.join(
+      Directory.current.parent.parent.parent.path, 'lib', 'main.dart');
 
   final ResolvedUnitResult result =
       await resolveFile2(path: debugFilePath) as ResolvedUnitResult;
 
-  final List<AnalysisError> errors = plugin.getErrorsFromResult(result);
+  final List<AnalysisError> errors =
+      plugin.getErrorsFromResult(result, plugin.astVisitor);
   print(errors.length);
 }
 ''';

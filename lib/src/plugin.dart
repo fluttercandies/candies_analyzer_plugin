@@ -23,45 +23,43 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 //import 'package:analyzer_plugin/src/utilities/fixes/fixes.dart';
 import 'package:candies_lints/src/extension.dart';
 import 'package:candies_lints/src/ignore_info.dart';
+import 'package:candies_lints/src/lints/error.dart';
 import 'package:candies_lints/src/lints/lint.dart';
 import 'package:candies_lints/src/lints/prefer_asset_const.dart';
 import 'package:candies_lints/src/lints/prefer_named_routes.dart';
 import 'package:candies_lints/src/lints/prefer_safe_setState.dart';
 import 'package:analyzer/error/error.dart' as error;
+import 'package:candies_lints/src/config.dart';
 
-import 'ast_visitor.dart';
 import 'log.dart';
 
 class CandiesLintsPlugin extends ServerPlugin {
-  CandiesLintsPlugin({
-    AstVisitorBase? astVisitor,
-    List<CandyLint>? lints,
-    String? name,
-    String? logFileName,
-  })  : astVisitor = astVisitor ?? CandiesLintsAstVisitor(),
-        lints = lints ?? defaultLints,
-        name = name ?? 'candies_lints',
-        super(resourceProvider: PhysicalResourceProvider.INSTANCE) {
-    this.astVisitor._lints = this.lints;
-    CandiesLintsLogger().logFileName = logFileName ?? 'candies_lints';
+  CandiesLintsPlugin()
+      : super(resourceProvider: PhysicalResourceProvider.INSTANCE) {
+    CandiesLintsLogger().logFileName = logFileName;
   }
 
   /// AstVisitor to check lint
-  final AstVisitorBase astVisitor;
+  AstVisitorBase get astVisitor => CandiesLintsAstVisitor();
 
   /// The lints to be used to analyze files
-  final List<CandyLint> lints;
+  List<CandyLint> get lints => <CandyLint>[
+        PreferAssetConst(),
+        PreferNamedRoutes(),
+        PerferSafeSetState(),
+      ];
 
-  /// The default lints.
-  static List<CandyLint> defaultLints = <CandyLint>[
-    PreferAssetConst(),
-    PreferNamedRoutes(),
-    PerferSafeSetState(),
-  ];
+  /// The name of log file
+  /// default this.name
+  String get logFileName => name;
+
+  /// The cache of configs
+  final Map<String, CandiesLintsConfig> _configs =
+      <String, CandiesLintsConfig>{};
 
   /// Return the user visible name of this plugin.
   @override
-  final String name;
+  String get name => 'candies_lints';
 
   /// Return the version number of the plugin spec required by this plugin,
   /// encoded as a string.
@@ -77,6 +75,8 @@ class CandiesLintsPlugin extends ServerPlugin {
   /// with any problems that are found, or `null` if there is no contact info.
   @override
   String get contactInfo => 'https://github.com/fluttercandies/candies_lints';
+
+  late AnalysisContextCollection _contextCollection;
 
   /// whether should analyze this file
   bool shouldAnalyzeFile(String path) {
@@ -111,12 +111,18 @@ class CandiesLintsPlugin extends ServerPlugin {
   @override
   Future<void> analyzeFile(
       {required AnalysisContext analysisContext, required String path}) async {
-    if (!shouldAnalyzeFile(path) || lints.isEmpty) {
+    if (lints.isEmpty || !shouldAnalyzeFile(path)) {
       return;
     }
 
     final bool isAnalyzed = analysisContext.contextRoot.isAnalyzed(path);
     if (!isAnalyzed) {
+      return;
+    }
+
+    final CandiesLintsConfig? config = _configs[analysisContext.root];
+    if (config == null || !config.shouldAnalyze) {
+      config?.astVisitor.clearCacheErrors(path);
       return;
     }
 
@@ -127,8 +133,11 @@ class CandiesLintsPlugin extends ServerPlugin {
       );
 
       final ResolvedUnitResult unitResult = await getResolvedUnitResult(path);
-
-      final List<AnalysisError> errors = getErrorsFromResult(unitResult);
+      final List<AnalysisError> errors = getErrorsFromResult(
+        unitResult,
+        config.astVisitor,
+        config: config,
+      );
       if (errors.isNotEmpty) {
         CandiesLintsLogger().log(
           'find ${errors.length} errors in ${unitResult.path}',
@@ -153,7 +162,11 @@ class CandiesLintsPlugin extends ServerPlugin {
   }
 
   /// Return AnalysisError List base on ResolvedUnitResult.
-  List<AnalysisError> getErrorsFromResult(ResolvedUnitResult unitResult) {
+  List<AnalysisError> getErrorsFromResult(
+    ResolvedUnitResult unitResult,
+    AstVisitorBase astVisitor, {
+    CandiesLintsConfig? config,
+  }) {
     unitResult.unit.visitChildren(astVisitor);
     final CandiesLintsIgnoreInfo ignore =
         CandiesLintsIgnoreInfo.forDart(unitResult);
@@ -161,6 +174,7 @@ class CandiesLintsPlugin extends ServerPlugin {
         .getAnalysisErrors(
           result: unitResult,
           ignore: ignore,
+          config: config,
         )
         .toList();
     return errors;
@@ -186,11 +200,27 @@ class CandiesLintsPlugin extends ServerPlugin {
       // CandiesLintsLogger().log(
       //     'has ${unitResult.errors.map((e) => e.errorCode)} errors for $path',
       //     root: unitResult.root);
-      //unitResult.unit.visitChildren(astVisitor);
+      final AnalysisContext context = _contextCollection.contextFor(path);
+      final String root = context.root;
 
-      final List<AnalysisErrorFixes> fixes = await astVisitor
+      final CandiesLintsConfig? config = _configs[root];
+      if (config == null || !config.shouldAnalyze) {
+        return EditGetFixesResult(const <AnalysisErrorFixes>[]);
+      }
+
+      CandiesLintsLogger().log(
+        'start get fixes for $path',
+        root: root,
+      );
+
+      final List<AnalysisErrorFixes> fixes = await config.astVisitor
           .getAnalysisErrorFixes(parameters: parameters)
           .toList();
+      CandiesLintsLogger().log(
+        'get ${fixes.length} fixes for $path',
+        root: root,
+      );
+
       return EditGetFixesResult(fixes);
     } on Exception catch (e, stackTrace) {
       // CandiesLintsLogger()
@@ -203,39 +233,27 @@ class CandiesLintsPlugin extends ServerPlugin {
 
     return EditGetFixesResult(const <AnalysisErrorFixes>[]);
   }
-}
 
-/// AstVisitor to check lint
-///
-mixin AstVisitorBase on AstVisitor<void> {
-  late List<CandyLint> _lints;
-  List<CandyLint> get lints => _lints;
-
-  bool analyze(AstNode node) {
-    bool handle = false;
-    for (final CandyLint lint in lints) {
-      handle = lint.analyze(node) || handle;
-    }
-    return handle;
-  }
-
-  Iterable<AnalysisError> getAnalysisErrors({
-    required ResolvedUnitResult result,
-    required CandiesLintsIgnoreInfo ignore,
-  }) sync* {
-    for (final CandyLint lint in lints) {
-      yield* lint.toAnalysisErrors(
-        result: result,
-        ignoreInfo: ignore,
+  /// This method is invoked when a new instance of [AnalysisContextCollection]
+  /// is created, so the plugin can perform initial analysis of analyzed files.
+  ///
+  /// By default analyzes every [AnalysisContext] with [analyzeFiles].
+  @override
+  Future<void> afterNewContextCollection({
+    required AnalysisContextCollection contextCollection,
+  }) async {
+    _contextCollection = contextCollection;
+    for (final AnalysisContext analysisContext in contextCollection.contexts) {
+      CandiesLintsLogger().log(
+          'create a new config for ${analysisContext.root}',
+          root: analysisContext.root);
+      _configs[analysisContext.root] = CandiesLintsConfig(
+        context: analysisContext,
+        pluginName: name,
+        lints: lints,
+        astVisitor: astVisitor,
       );
     }
-  }
-
-  Stream<AnalysisErrorFixes> getAnalysisErrorFixes({
-    required EditGetFixesParams parameters,
-  }) async* {
-    for (final CandyLint lint in lints) {
-      yield* lint.toAnalysisErrorFixesStream(parameters: parameters);
-    }
+    await super.afterNewContextCollection(contextCollection: contextCollection);
   }
 }

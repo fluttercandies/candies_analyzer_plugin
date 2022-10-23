@@ -13,6 +13,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_yaml.dar
 import 'package:candies_lints/src/extension.dart';
 import 'package:candies_lints/src/ignore_info.dart';
 import 'package:candies_lints/src/log.dart';
+import 'package:candies_lints/src/config.dart';
 
 import 'error.dart';
 
@@ -60,6 +61,7 @@ abstract class CandyLint {
   Iterable<AnalysisError> toAnalysisErrors({
     required ResolvedUnitResult result,
     required CandiesLintsIgnoreInfo ignoreInfo,
+    required CandiesLintsConfig? config,
   }) sync* {
     final Map<SyntacticEntity, AstNode> copy = <SyntacticEntity, AstNode>{};
     copy.addAll(_astNodes);
@@ -83,6 +85,7 @@ abstract class CandyLint {
           location: location,
           astNode: copy[syntacticEntity]!,
           ignoreInfo: ignoreInfo,
+          config: config,
         );
         errors.add(error);
         yield error;
@@ -228,13 +231,14 @@ abstract class CandyLint {
     required Location location,
     required AstNode astNode,
     required CandiesLintsIgnoreInfo ignoreInfo,
+    required CandiesLintsConfig? config,
   }) {
     CandiesLintsLogger().log(
       'find error: $code at ${location.startLine} line in ${result.path}',
       root: result.root,
     );
     return CandyAnalysisError(
-      severity,
+      config?.getSeverity(this) ?? severity,
       type,
       location,
       message,
@@ -268,6 +272,10 @@ abstract class CandyLint {
 
   final Map<String, List<CandyAnalysisError>> _cacheErrorsForFixes =
       <String, List<CandyAnalysisError>>{};
+
+  void clearCacheErrors(String path) {
+    _cacheErrorsForFixes.remove(path);
+  }
 
   bool analyze(AstNode node) {
     if (!_astNodes.containsKey(node) &&

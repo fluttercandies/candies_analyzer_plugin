@@ -19,6 +19,9 @@ The plugin to help create custom lint quickly.
     - [update code](#update-code)
     - [restart server](#restart-server)
   - [Log](#log)
+  - [Config](#config)
+    - [disable a lint](#disable-a-lint)
+    - [custom a lint](#custom-a-lint)
   - [Note](#note)
 
 * [example](https://github.com/fluttercandies/candies_lints/example)
@@ -85,16 +88,19 @@ void main(List<String> args, SendPort sendPort) {
   CandiesLintsStarter.start(
     args,
     sendPort,
-    plugin: CandiesLintsPlugin(
-      name: 'custom_lint',
-      logFileName: 'custom_lint',
-      lints: <CandyLint>[
-        ...CandiesLintsPlugin.defaultLints,
-        // add your lint here
-        PerferCandiesClassPrefix(),
-      ],
-    ),
+    plugin: CustomLintPlugin(),
   );
+}
+
+class CustomLintPlugin extends CandiesLintsPlugin {
+  @override
+  String get name => 'custom_lint';
+  @override
+  List<CandyLint> get lints => <CandyLint>[
+        // add your line here
+        PerferCandiesClassPrefix(),
+        ...super.lints,
+      ];
 }
 ```
 
@@ -337,6 +343,53 @@ Under the project  `custom_lint.log` will be generated.
      stackTrace: stackTrace,
    );
 ```
+
+## Config
+
+### disable a lint
+
+As default, all of the custom lints are enable. And you can also write a config in analysis_options.yaml to disable they.
+
+1. add ignore for a lint.
+
+``` yaml
+analyzer:
+  errors:
+    perfer_candies_class_prefix: ignore
+```
+
+2. exclude files
+  
+``` yaml
+analyzer:
+  exclude:
+    - lib/exclude/*.dart
+```
+
+3. 
+
+``` yaml
+linter:
+  rules:
+    # disable a lint
+    perfer_candies_class_prefix: false 
+```
+
+
+### custom a lint
+
+you can change lint severity by following setting.
+
+change the severity of `perfer_candies_class_prefix` from `info` to `warning`.
+
+``` yaml
+analyzer:
+  errors:
+    # override error severity
+    perfer_candies_class_prefix: warning
+```
+
+
 ## Note 
 
 

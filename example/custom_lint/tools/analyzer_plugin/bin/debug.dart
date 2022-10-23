@@ -13,6 +13,7 @@ Future<void> main(List<String> args) async {
   final ResolvedUnitResult result =
       await resolveFile2(path: debugFilePath) as ResolvedUnitResult;
 
-  final List<AnalysisError> errors = plugin.getErrorsFromResult(result);
+  final List<AnalysisError> errors =
+      plugin.getErrorsFromResult(result, plugin.astVisitor);
   print(errors.length);
 }
