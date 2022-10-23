@@ -1,10 +1,8 @@
-import 'package:yaml/yaml.dart';
-
-import 'generic.dart';
+import 'package:analyzer_plugin/protocol/protocol_common.dart';
 
 /// The cache error for get fixes
-class YamlAnalysisError extends GenericAnalysisError {
-  YamlAnalysisError(
+class GenericAnalysisError extends AnalysisError {
+  GenericAnalysisError(
     super.severity,
     super.type,
     super.location,
@@ -14,9 +12,9 @@ class YamlAnalysisError extends GenericAnalysisError {
     super.url,
     super.contextMessages,
     super.hasFix,
-    required super.content,
-    required this.root,
+    required this.content,
   });
 
-  final YamlNode root;
+  /// The file whole content
+  final String content;
 }

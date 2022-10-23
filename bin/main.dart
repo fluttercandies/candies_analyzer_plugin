@@ -57,15 +57,18 @@ void main(List<String> args) {
 }
 
 const String pluginDemo = '''
+import 'dart:convert';
 import 'dart:isolate';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer/dart/ast/token.dart';
+import 'package:analyzer/source/line_info.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_lints/candies_lints.dart';
+import 'package:analyzer/src/pubspec/pubspec_validator.dart';
 
 CandiesLintsPlugin get plugin => CustomLintPlugin();
 
@@ -81,15 +84,30 @@ void main(List<String> args, SendPort sendPort) {
 class CustomLintPlugin extends CandiesLintsPlugin {
   @override
   String get name => '{0}';
+
   @override
-  List<CandyLint> get lints => <CandyLint>[
-        // add your line here
-        PerferCandiesClassPrefix(),
-        ...super.lints,
+  List<String> get fileGlobsToAnalyze => const <String>[
+        '**/*.dart',
+        '**/*.yaml',
+        '**/*.json',
       ];
+  // add your dart lints here
+  @override
+  List<DartLint> get dartLints => <DartLint>[
+        PerferCandiesClassPrefix(),
+        ...super.dartLints,
+      ];
+
+  // add your yaml lints here
+  @override
+  List<YamlLint> get yamlLints => <YamlLint>[RemoveDependency(package: 'path')];
+
+  // add your generic lints here
+  @override
+  List<GenericLint> get genericLints => <GenericLint>[RemoveDuplicateValue()];
 }
 
-class PerferCandiesClassPrefix extends CandyLint {
+class PerferCandiesClassPrefix extends DartLint {
   @override
   String get code => 'perfer_candies_class_prefix';
 
@@ -112,7 +130,7 @@ class PerferCandiesClassPrefix extends CandyLint {
   String get message => 'Define a class name start with Candies';
 
   @override
-  Future<List<SourceChange>> getFixes(
+  Future<List<SourceChange>> getDartFixes(
     ResolvedUnitResult resolvedUnitResult,
     AstNode astNode,
   ) async {
@@ -120,7 +138,7 @@ class PerferCandiesClassPrefix extends CandyLint {
     final Token nameNode = (astNode as ClassDeclaration).name2;
     final String nameString = nameNode.toString();
     return <SourceChange>[
-      await getFix(
+      await getDartFix(
         resolvedUnitResult: resolvedUnitResult,
         message: 'Use Candies as a class prefix.',
         buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
@@ -154,6 +172,101 @@ class PerferCandiesClassPrefix extends CandyLint {
     return index;
   }
 }
+
+class RemoveDependency extends YamlLint {
+  RemoveDependency({required this.package});
+  final String package;
+  @override
+  String get code => 'remove_\${package}_dependency';
+
+  @override
+  String get message => 'Remove \$package dependency';
+
+  @override
+  String? get correction => 'Remove \$package dependency';
+
+  @override
+  AnalysisErrorSeverity get severity => AnalysisErrorSeverity.WARNING;
+
+  @override
+  Iterable<SourceRange> matchLint(
+    YamlNode root,
+    String content,
+    LineInfo lineInfo,
+  ) sync* {
+    if (root is YamlMap && root.containsKey(PubspecField.DEPENDENCIES_FIELD)) {
+      final YamlNode dependencies =
+          root.nodes[PubspecField.DEPENDENCIES_FIELD]!;
+      if (dependencies is YamlMap && dependencies.containsKey(package)) {
+        final YamlNode get = dependencies.nodes[package]!;
+        int start = dependencies.span.start.offset;
+        final int end = get.span.start.offset;
+        final int index = content.substring(start, end).indexOf('\$package: ');
+        start += index;
+        yield SourceRange(start, get.span.end.offset - start);
+      }
+    }
+  }
+}
+
+class RemoveDuplicateValue extends GenericLint {
+  @override
+  String get code => 'remove_duplicate_value';
+
+  @override
+  Iterable<SourceRange> matchLint(
+    String content,
+    String file,
+    LineInfo lineInfo,
+  ) sync* {
+    if (isFileType(file: file, type: '.json')) {
+      final Map<dynamic, dynamic> map =
+          jsonDecode(content) as Map<dynamic, dynamic>;
+
+      final Map<dynamic, dynamic> duplicate = <dynamic, dynamic>{};
+      final Map<dynamic, dynamic> checkDuplicate = <dynamic, dynamic>{};
+      for (final dynamic key in map.keys) {
+        final dynamic value = map[key];
+        if (checkDuplicate.containsKey(value)) {
+          duplicate[key] = value;
+          duplicate[checkDuplicate[value]] = value;
+        }
+        checkDuplicate[value] = key;
+      }
+
+      if (duplicate.isNotEmpty) {
+        for (final dynamic key in duplicate.keys) {
+          final int start = content.indexOf('"\$key"');
+          final dynamic value = duplicate[key];
+          final int end = content.indexOf(
+                '"\$value"',
+                start,
+              ) +
+              value.toString().length +
+              1;
+
+          final int lineNumber = lineInfo.getLocation(end).lineNumber;
+
+          bool hasComma = false;
+          int commaIndex = end;
+          int commaLineNumber = lineInfo.getLocation(commaIndex).lineNumber;
+
+          while (!hasComma && commaLineNumber == lineNumber) {
+            commaIndex++;
+            final String char = content[commaIndex];
+            hasComma = char == ',';
+            commaLineNumber = lineInfo.getLocation(commaIndex).lineNumber;
+          }
+
+          yield SourceRange(start, (hasComma ? commaIndex : end) + 1 - start);
+        }
+      }
+    }
+  }
+
+  @override
+  String get message => 'remove duplicate value';
+}
 ''';
 
 const String pubspec = '''
@@ -181,8 +294,8 @@ const String debugDemo = '''
 import 'dart:io';
 import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
-import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:candies_lints/candies_lints.dart';
 import 'plugin.dart';
 
@@ -194,14 +307,29 @@ Future<void> main(List<String> args) async {
   final CandiesLintsPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
-      if (!myPlugin.shouldAnalyzeFile(file)) {
+      if (!myPlugin.shouldAnalyzeFile(file, context)) {
         continue;
       }
-      final List<AnalysisError> errors = myPlugin.getErrorsFromResultForDebug(
-        await context.currentSession.getResolvedUnit(file)
-            as ResolvedUnitResult,
+
+      final bool isAnalyzed = context.contextRoot.isAnalyzed(file);
+      if (!isAnalyzed) {
+        continue;
+      }
+
+      final List<AnalysisError> errors =
+          (await myPlugin.getAnalysisErrorsForDebug(
+        file,
         context,
-      );
+      ))
+              .toList();
+      for (final AnalysisError error in errors) {
+        final List<AnalysisErrorFixes> fixes = await myPlugin
+            .getAnalysisErrorFixesForDebug(
+                EditGetFixesParams(file, error.location.offset), context)
+            .toList();
+        print(fixes.length);
+      }
+
       print(errors.length);
     }
   }

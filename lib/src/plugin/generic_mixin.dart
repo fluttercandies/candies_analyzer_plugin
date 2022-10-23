@@ -8,5 +8,17 @@ mixin GenericFilePlugin on ServerPlugin {
     required AnalysisContext analysisContext,
     required String path,
     required CandiesLintsConfig config,
-  }) sync* {}
+  }) sync* {
+    final String content = File(path).readAsStringSync();
+    final LineInfo lineInfo = LineInfo.fromContent(content);
+    for (final GenericLint lint in config.genericLints) {
+      yield* lint.toGenericAnalysisErrors(
+        analysisContext: analysisContext,
+        path: path,
+        config: config,
+        content: content,
+        lineInfo: lineInfo,
+      );
+    }
+  }
 }

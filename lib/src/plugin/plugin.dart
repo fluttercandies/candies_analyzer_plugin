@@ -1,4 +1,4 @@
-// ignore_for_file: unused_import
+// ignore_for_file: unused_import, implementation_imports
 
 import 'dart:async';
 import 'dart:io';
@@ -23,11 +23,10 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:candies_lints/candies_lints.dart';
 //import 'package:analyzer_plugin/src/utilities/fixes/fixes.dart';
 import 'package:candies_lints/src/error/dart.dart';
-import 'package:candies_lints/src/lints/generic_lint.dart';
 import 'package:candies_lints/src/lints/lint.dart';
 import 'package:analyzer/error/error.dart' as error;
 import 'package:path/path.dart' as path_package;
-
+import 'package:analyzer/src/util/glob.dart';
 part 'dart_mixin.dart';
 part 'yaml_mixin.dart';
 part 'generic_mixin.dart';
@@ -68,9 +67,33 @@ class CandiesLintsPlugin extends ServerPlugin
   final Map<String, CandiesLintsConfig> _configs =
       <String, CandiesLintsConfig>{};
 
+  List<Glob>? __fileGlobsToAnalyze;
+
+  List<Glob> get _fileGlobsToAnalyze =>
+      __fileGlobsToAnalyze ??= fileGlobsToAnalyze
+          .map((String e) => Glob(path_package.separator, e))
+          .toList();
+
   /// whether should analyze this file
-  bool shouldAnalyzeFile(String path) {
-    return path.endsWith('.dart') && !path.endsWith('.g.dart');
+  bool shouldAnalyzeFile(
+    String file,
+    AnalysisContext analysisContext,
+  ) {
+    if (file.endsWith('.g.dart')) {
+      return false;
+    }
+
+    final String relative = path_package.relative(
+      file,
+      from: analysisContext.root,
+    );
+
+    for (final Glob pattern in _fileGlobsToAnalyze) {
+      if (pattern.matches(relative)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /// Handles files that might have been affected by a content change of
@@ -101,7 +124,7 @@ class CandiesLintsPlugin extends ServerPlugin
   @override
   Future<void> analyzeFile(
       {required AnalysisContext analysisContext, required String path}) async {
-    if (dartLints.isEmpty || !shouldAnalyzeFile(path)) {
+    if (dartLints.isEmpty || !shouldAnalyzeFile(path, analysisContext)) {
       return;
     }
 
@@ -189,6 +212,7 @@ class CandiesLintsPlugin extends ServerPlugin
       dartLints: dartLints,
       astVisitor: astVisitor,
       yamlLints: yamlLints,
+      genericLints: genericLints,
     );
     return getAnalysisErrors(config, path, analysisContext);
   }
@@ -200,8 +224,8 @@ class CandiesLintsPlugin extends ServerPlugin
   Future<EditGetFixesResult> handleEditGetFixes(
       EditGetFixesParams parameters) async {
     final String path = parameters.file;
-
-    if (!shouldAnalyzeFile(path) || dartLints.isEmpty) {
+    final AnalysisContext context = _contextCollection.contextFor(path);
+    if (!shouldAnalyzeFile(path, context) || dartLints.isEmpty) {
       return EditGetFixesResult(const <AnalysisErrorFixes>[]);
     }
 
@@ -214,7 +238,7 @@ class CandiesLintsPlugin extends ServerPlugin
       // CandiesLintsLogger().log(
       //     'has ${unitResult.errors.map((e) => e.errorCode)} errors for $path',
       //     root: unitResult.root);
-      final AnalysisContext context = _contextCollection.contextFor(path);
+
       final String root = context.root;
 
       final CandiesLintsConfig? config = _configs[root];
@@ -273,6 +297,7 @@ class CandiesLintsPlugin extends ServerPlugin
       dartLints: dartLints,
       astVisitor: astVisitor,
       yamlLints: yamlLints,
+      genericLints: genericLints,
     );
     return getAnalysisErrorFixes(
       config,
@@ -297,6 +322,7 @@ class CandiesLintsPlugin extends ServerPlugin
         dartLints: dartLints,
         astVisitor: astVisitor,
         yamlLints: yamlLints,
+        genericLints: genericLints,
       );
       if (config.shouldAnalyze) {
         _configs[analysisContext.root] = config;

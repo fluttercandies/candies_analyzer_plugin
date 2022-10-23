@@ -14,6 +14,9 @@ The plugin to help create custom lint quickly.
   - [Add your lint](#add-your-lint)
     - [start plugin](#start-plugin)
     - [create a lint](#create-a-lint)
+      - [dart lint](#dart-lint)
+      - [yaml lint](#yaml-lint)
+      - [generic lint](#generic-lint)
   - [Debug](#debug)
     - [debug lint](#debug-lint)
     - [update code](#update-code)
@@ -31,6 +34,7 @@ The plugin to help create custom lint quickly.
   - [Note](#note)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
+    - [quick fixes are only supported for dart files.](#quick-fixes-are-only-supported-for-dart-files)
 
 * [example](https://github.com/fluttercandies/candies_lints/example)
 
@@ -92,29 +96,46 @@ find `plugin.dart` base on following project tree
 we start plugin in this file.
 
 ``` dart
+CandiesLintsPlugin get plugin => CustomLintPlugin();
+
+// This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
   CandiesLintsStarter.start(
     args,
     sendPort,
-    plugin: CustomLintPlugin(),
+    plugin: plugin,
   );
 }
 
 class CustomLintPlugin extends CandiesLintsPlugin {
   @override
   String get name => 'custom_lint';
+
   @override
-  List<CandyLint> get lints => <CandyLint>[
-        // add your line here
-        PerferCandiesClassPrefix(),
-        ...super.lints,
+  List<String> get fileGlobsToAnalyze => const <String>[
+        '**/*.dart',
+        '**/*.yaml',
+        '**/*.json',
       ];
+
+  @override
+  List<DartLint> get dartLints => <DartLint>[
+        // add your dart lint here
+        PerferCandiesClassPrefix(),
+        ...super.dartLints,
+      ];
+
+  @override
+  List<YamlLint> get yamlLints => <YamlLint>[RemoveDependency(package: 'path')];
+
+  @override
+  List<GenericLint> get genericLints => <GenericLint>[RemoveDuplicateValue()];
 }
 ```
 
 ### create a lint
 
-you just need to make a custom lint which extends `CandyLint`.
+you just need to make a custom lint which extends from  `DartLint` ,`YamlLint`, `GenericLint`.
 
 
 Properties: 
@@ -135,13 +156,15 @@ Important methodes:
 | Method | Description  | Override |
 | --- | --- | --- |
 | matchLint | return whether is match lint. | must | 
-| getFixes | return fixes if has. |  | 
+| getDartFixes/getYamlFixes/getGenericFixes | return fixes if has. | getYamlFixes/getGenericFixes doesn't work for now, leave it in case dart team maybe support it someday in the future, see [issue](https://github.com/dart-lang/sdk/issues/50306)  | 
 
 
-Here is a demo for a custom lint:
+#### dart lint
+
+Here is a demo for a dart lint:
 
 ``` dart
-class PerferCandiesClassPrefix extends CandyLint {
+class PerferCandiesClassPrefix extends DartLint {
   @override
   String get code => 'perfer_candies_class_prefix';
 
@@ -207,6 +230,113 @@ class PerferCandiesClassPrefix extends CandyLint {
   }
 }
 ```
+#### yaml lint
+
+Here is a demo for a yaml lint:
+
+``` dart
+class RemoveDependency extends YamlLint {
+  RemoveDependency({required this.package});
+  final String package;
+  @override
+  String get code => 'remove_${package}_dependency';
+
+  @override
+  String get message => 'don\'t use $package!';
+
+  @override
+  String? get correction => 'Remove $package dependency';
+
+  @override
+  AnalysisErrorSeverity get severity => AnalysisErrorSeverity.WARNING;
+
+  @override
+  Iterable<SourceRange> matchLint(
+    YamlNode root,
+    String content,
+    LineInfo lineInfo,
+  ) sync* {
+    if (root is YamlMap && root.containsKey(PubspecField.DEPENDENCIES_FIELD)) {
+      final YamlNode dependencies =
+          root.nodes[PubspecField.DEPENDENCIES_FIELD]!;
+      if (dependencies is YamlMap && dependencies.containsKey(package)) {
+        final YamlNode get = dependencies.nodes[package]!;
+        int start = dependencies.span.start.offset;
+        final int end = get.span.start.offset;
+        final int index = content.substring(start, end).indexOf('$package: ');
+        start += index;
+        yield SourceRange(start, get.span.end.offset - start);
+      }
+    }
+  }
+}
+```
+
+#### generic lint
+
+Here is a demo for a generic lint:
+
+``` dart
+class RemoveDuplicateValue extends GenericLint {
+  @override
+  String get code => 'remove_duplicate_value';
+
+  @override
+  Iterable<SourceRange> matchLint(
+    String content,
+    String file,
+    LineInfo lineInfo,
+  ) sync* {
+    if (isFileType(file: file, type: '.json')) {
+      final Map<dynamic, dynamic> map =
+          jsonDecode(content) as Map<dynamic, dynamic>;
+
+      final Map<dynamic, dynamic> duplicate = <dynamic, dynamic>{};
+      final Map<dynamic, dynamic> checkDuplicate = <dynamic, dynamic>{};
+      for (final dynamic key in map.keys) {
+        final dynamic value = map[key];
+        if (checkDuplicate.containsKey(value)) {
+          duplicate[key] = value;
+          duplicate[checkDuplicate[value]] = value;
+        }
+        checkDuplicate[value] = key;
+      }
+
+      if (duplicate.isNotEmpty) {
+        for (final dynamic key in duplicate.keys) {
+          final int start = content.indexOf('"$key"');
+          final dynamic value = duplicate[key];
+          final int end = content.indexOf(
+                '"$value"',
+                start,
+              ) +
+              value.toString().length +
+              1;
+
+          final int lineNumber = lineInfo.getLocation(end).lineNumber;
+
+          bool hasComma = false;
+          int commaIndex = end;
+          int commaLineNumber = lineInfo.getLocation(commaIndex).lineNumber;
+
+          while (!hasComma && commaLineNumber == lineNumber) {
+            commaIndex++;
+            final String char = content[commaIndex];
+            hasComma = char == ',';
+            commaLineNumber = lineInfo.getLocation(commaIndex).lineNumber;
+          }
+
+          yield SourceRange(start, (hasComma ? commaIndex : end) + 1 - start);
+        }
+      }
+    }
+  }
+
+  @override
+  String get message => 'remove duplicate value';
+}
+```
+
 ## Debug
 
 
@@ -223,14 +353,14 @@ find `debug.dart` base on following project tree
 │  │        │  └─ debug.dart
 ```
 
-change root to which you want to debug.
+change root to which you want to debug, default is example folder.
  
 ``` dart
 import 'dart:io';
 import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
-import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:candies_lints/candies_lints.dart';
 import 'plugin.dart';
 
@@ -242,14 +372,29 @@ Future<void> main(List<String> args) async {
   final CandiesLintsPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
-      if (!myPlugin.shouldAnalyzeFile(file)) {
+      if (!myPlugin.shouldAnalyzeFile(file, context)) {
         continue;
       }
-      final List<AnalysisError> errors = myPlugin.getErrorsFromResultForDebug(
-        await context.currentSession.getResolvedUnit(file)
-            as ResolvedUnitResult,
+
+      final bool isAnalyzed = context.contextRoot.isAnalyzed(file);
+      if (!isAnalyzed) {
+        continue;
+      }
+
+      final List<AnalysisError> errors =
+          (await myPlugin.getAnalysisErrorsForDebug(
+        file,
         context,
-      );
+      ))
+              .toList();
+      for (final AnalysisError error in errors) {
+        final List<AnalysisErrorFixes> fixes = await myPlugin
+            .getAnalysisErrorFixesForDebug(
+                EditGetFixesParams(file, error.location.offset), context)
+            .toList();
+        print(fixes.length);
+      }
+
       print(errors.length);
     }
   }
@@ -431,7 +576,7 @@ analyzer:
 Define a class name start with prefix
 
 ``` dart
-class PerferClassPrefix extends CandyLint {
+class PerferClassPrefix extends DartLint {
   PerferClassPrefix(this.prefix);
 
   final String prefix;
@@ -446,7 +591,7 @@ class PerferClassPrefix extends CandyLint {
 Prefer to use asset const instead of a string.
 
 ``` dart
-class PreferAssetConst extends CandyLint {
+class PreferAssetConst extends DartLint {
   @override
   String get code => 'prefer_asset_const';
 }
@@ -456,7 +601,7 @@ class PreferAssetConst extends CandyLint {
 Prefer to use named routes.
 
 ``` dart
-class PreferNamedRoutes extends CandyLint {
+class PreferNamedRoutes extends DartLint {
   @override
   String get code => 'prefer_named_routes';
 }
@@ -467,7 +612,7 @@ class PreferNamedRoutes extends CandyLint {
 Prefer to check mounted before setState
 
 ``` dart
-class PerferSafeSetState extends CandyLint {
+class PerferSafeSetState extends DartLint {
   @override
   String get code => 'prefer_safe_setState';
 }
@@ -487,6 +632,9 @@ you must do following things to support your project to be analyzed.
    
 2. add `custom_lint` into `analyzer` `plugins` in `analysis_options.yaml` see [analysis_options.yaml](https://github.com/fluttercandies/candies_lints/example/analysis_options.yaml)
 
+### quick fixes are only supported for dart files.
+
+[issue](https://github.com/dart-lang/sdk/issues/50306)
 
 
 

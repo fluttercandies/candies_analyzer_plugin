@@ -14,7 +14,7 @@ Future<void> main(List<String> args) async {
   final CandiesLintsPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
-      if (!myPlugin.shouldAnalyzeFile(file)) {
+      if (!myPlugin.shouldAnalyzeFile(file, context)) {
         continue;
       }
 

@@ -1,241 +1,206 @@
+import 'package:analyzer/dart/analysis/analysis_context.dart';
+import 'package:analyzer/source/line_info.dart';
+import 'package:analyzer/source/source_range.dart';
+import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:analyzer_plugin/protocol/protocol_generated.dart';
+import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import 'package:candies_lints/src/config.dart';
+import 'package:candies_lints/src/error/generic.dart';
+import 'package:candies_lints/src/extension.dart';
 import 'package:candies_lints/src/lints/lint.dart';
+import 'package:candies_lints/src/log.dart';
+import 'package:path/path.dart' as path_package;
 
-/// The yaml lint base
+/// The generic lint base
 abstract class GenericLint extends CandyLint {
-  // Iterable<AnalysisError> toDartAnalysisErrors({
-  //   required String content,
-  //   required CandiesLintsConfig? config,
-  // }) sync* {
-  //   final Map<SyntacticEntity, AstNode> copy = <SyntacticEntity, AstNode>{};
-  //   copy.addAll(_astNodes);
-  //   if (copy.isNotEmpty) {
-  //     CandiesLintsLogger().log(
-  //       'find ${copy.length} lint($code) at ${result.path}',
-  //       root: result.root,
-  //     );
-  //   }
-  //   _astNodes.clear();
-  //   final List<DartAnalysisError> errors = <DartAnalysisError>[];
-  //   _cacheErrorsForFixes[result.path] = errors;
-  //   for (final SyntacticEntity syntacticEntity in copy.keys) {
-  //     final Location location = astNodeToLocation(
-  //       result,
-  //       syntacticEntity,
-  //     );
-  //     if (!ignoreInfo.ignoredAt(code, location.startLine)) {
-  //       final DartAnalysisError error = toDartAnalysisError(
-  //         result: result,
-  //         location: location,
-  //         astNode: copy[syntacticEntity]!,
-  //         ignoreInfo: ignoreInfo,
-  //         config: config,
-  //       );
-  //       errors.add(error);
-  //       yield error;
-  //     } else {
-  //       CandiesLintsLogger().log(
-  //         'ignore code: $code at ${result.lineNumber(syntacticEntity.offset)} line in ${result.path}',
-  //         root: result.root,
-  //       );
-  //     }
-  //   }
-  // }
+  Iterable<GenericAnalysisError> toGenericAnalysisErrors({
+    required AnalysisContext analysisContext,
+    required String path,
+    required CandiesLintsConfig? config,
+    required String content,
+    required LineInfo lineInfo,
+  }) sync* {
+    final List<SourceRange> nodes = matchLint(
+      content,
+      path,
+      lineInfo,
+    ).toList();
 
-  // Stream<AnalysisErrorFixes> toDartAnalysisErrorFixesStream(
-  //     {required EditGetFixesParams parameters}) async* {
-  //   final List<DartAnalysisError>? errors =
-  //       _cacheErrorsForFixes[parameters.file];
-  //   if (errors != null) {
-  //     for (final DartAnalysisError error in errors) {
-  //       if (error.location.offset <= parameters.offset &&
-  //           parameters.offset <=
-  //               error.location.offset + error.location.length) {
-  //         yield await toAnalysisErrorFixes(error: error);
-  //       }
-  //     }
-  //   }
-  // }
+    CandiesLintsLogger().log(
+      'find ${nodes.length} yaml lint($code) at $path',
+      root: analysisContext.root,
+    );
 
-  // Future<AnalysisErrorFixes> toAnalysisErrorFixes(
-  //     {required DartAnalysisError error}) async {
-  //   List<SourceChange> fixes = await getDartFixes(
-  //     error.result,
-  //     error.astNode,
-  //   );
+    final List<GenericAnalysisError> errors = <GenericAnalysisError>[];
+    _cacheErrorsForFixes[path] = errors;
+    for (final SourceRange node in nodes) {
+      final Location location = sourceSpanToLocation(
+        path,
+        node,
+        lineInfo,
+      );
 
-  //   fixes.add(
-  //     await ignoreForThisLine(
-  //       resolvedUnitResult: error.result,
-  //       ignore: error.ignoreInfo,
-  //       code: code,
-  //       location: error.location,
-  //     ),
-  //   );
+      final GenericAnalysisError error = toGenericAnalysisError(
+        analysisContext: analysisContext,
+        path: path,
+        location: location,
+        config: config,
+        content: content,
+      );
+      errors.add(error);
+      yield error;
+    }
+  }
 
-  //   fixes.add(
-  //     await ignoreForThisFile(
-  //       resolvedUnitResult: error.result,
-  //       ignore: error.ignoreInfo,
-  //     ),
-  //   );
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
+  Stream<AnalysisErrorFixes> toGenericAnalysisErrorFixesStream({
+    required EditGetFixesParams parameters,
+    required AnalysisContext analysisContext,
+  }) async* {
+    final List<GenericAnalysisError>? errors =
+        _cacheErrorsForFixes[parameters.file];
+    if (errors != null) {
+      for (final GenericAnalysisError error in errors) {
+        if (error.location.offset <= parameters.offset &&
+            parameters.offset <=
+                error.location.offset + error.location.length) {
+          yield await toGenericAnalysisErrorFixes(
+            error: error,
+            path: parameters.file,
+            analysisContext: analysisContext,
+          );
+        }
+      }
+    }
+  }
 
-  //   fixes = fixes.reversed.toList();
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
+  Future<AnalysisErrorFixes> toGenericAnalysisErrorFixes({
+    required GenericAnalysisError error,
+    required AnalysisContext analysisContext,
+    required String path,
+  }) async {
+    List<SourceChange> fixes = await getGenericFixes(
+      analysisContext,
+      path,
+      error,
+    );
 
-  //   CandiesLintsLogger().log(
-  //     'get ${fixes.length} fixes for lint($code) at ${error.result.path}',
-  //     root: error.result.root,
-  //   );
+    if (fixes.isNotEmpty) {
+      fixes = fixes.reversed.toList();
+    }
 
-  //   return AnalysisErrorFixes(
-  //     error,
-  //     fixes: <PrioritizedSourceChange>[
-  //       for (int i = 0; i < fixes.length; i++)
-  //         PrioritizedSourceChange(i, fixes[i])
-  //     ],
-  //   );
-  // }
+    CandiesLintsLogger().log(
+      'get ${fixes.length} fixes for yaml lint($code) at $path',
+      root: analysisContext.root,
+    );
 
-  // Future<SourceChange> ignoreForThisFile({
-  //   required ResolvedUnitResult resolvedUnitResult,
-  //   required CandiesLintsIgnoreInfo ignore,
-  // }) {
-  //   return getDartFix(
-  //     resolvedUnitResult: resolvedUnitResult,
-  //     message: 'Ignore \'$code\' for this file',
-  //     buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
-  //       ignore.fixIgnoreForThisFile(
-  //         code,
-  //         dartFileEditBuilder: dartFileEditBuilder,
-  //       );
-  //     },
-  //   );
-  // }
+    return AnalysisErrorFixes(
+      error,
+      fixes: <PrioritizedSourceChange>[
+        for (int i = 0; i < fixes.length; i++)
+          PrioritizedSourceChange(i, fixes[i])
+      ],
+    );
+  }
 
-  // Future<SourceChange> ignoreForThisLine({
-  //   required ResolvedUnitResult resolvedUnitResult,
-  //   required CandiesLintsIgnoreInfo ignore,
-  //   required Location location,
-  //   required String code,
-  // }) {
-  //   return getDartFix(
-  //     resolvedUnitResult: resolvedUnitResult,
-  //     message: 'Ignore \'$code\' for this line',
-  //     buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
-  //       ignore.fixIgnoreForThisLine(
-  //         code,
-  //         location,
-  //         dartFileEditBuilder: dartFileEditBuilder,
-  //       );
-  //     },
-  //   );
-  // }
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
+  Future<SourceChange> getGenericFix({
+    required AnalysisContext analysisContext,
+    required String path,
+    required String message,
+    required void Function(FileEditBuilder builder) buildFileEdit,
+  }) async {
+    final ChangeBuilder changeBuilder =
+        ChangeBuilder(session: analysisContext.currentSession);
 
-  // Future<SourceChange> getDartFix({
-  //   required ResolvedUnitResult resolvedUnitResult,
-  //   required String message,
-  //   void Function(DartFileEditBuilder builder)? buildDartFileEdit,
-  //   void Function(YamlFileEditBuilder builder)? buildYamlFileEdit,
-  //   void Function(FileEditBuilder builder)? buildGenericFileEdit,
-  //   ImportPrefixGenerator? importPrefixGenerator,
-  // }) async {
-  //   final ChangeBuilderImpl changeBuilder =
-  //       ChangeBuilderImpl(session: resolvedUnitResult.session);
-  //   if (buildDartFileEdit != null) {
-  //     await changeBuilder.addDartFileEdit(
-  //       resolvedUnitResult.libraryElement.source.fullName,
-  //       buildDartFileEdit,
-  //       importPrefixGenerator: importPrefixGenerator,
-  //     );
-  //   } else if (buildYamlFileEdit != null) {
-  //     await changeBuilder.addYamlFileEdit(
-  //       resolvedUnitResult.libraryElement.source.fullName,
-  //       buildYamlFileEdit,
-  //     );
-  //   } else if (buildGenericFileEdit != null) {
-  //     await changeBuilder.addGenericFileEdit(
-  //       resolvedUnitResult.libraryElement.source.fullName,
-  //       buildGenericFileEdit,
-  //     );
-  //   }
-  //   final SourceChange sourceChange = changeBuilder.sourceChange;
-  //   sourceChange.message = message;
-  //   return sourceChange;
-  // }
+    await changeBuilder.addGenericFileEdit(
+      path,
+      buildFileEdit,
+    );
 
-  // /// Quick fix for lint
-  // Future<List<SourceChange>> getDartFixes(
-  //   ResolvedUnitResult resolvedUnitResult,
-  //   AstNode astNode,
-  // ) async =>
-  //     <SourceChange>[];
+    final SourceChange sourceChange = changeBuilder.sourceChange;
+    sourceChange.message = message;
+    return sourceChange;
+  }
 
-  // DartAnalysisError toDartAnalysisError({
-  //   required ResolvedUnitResult result,
-  //   required Location location,
-  //   required AstNode astNode,
-  //   required CandiesLintsIgnoreInfo ignoreInfo,
-  //   required CandiesLintsConfig? config,
-  // }) {
-  //   CandiesLintsLogger().log(
-  //     'find error: $code at ${location.startLine} line in ${result.path}',
-  //     root: result.root,
-  //   );
-  //   return DartAnalysisError(
-  //     config?.getSeverity(this) ?? severity,
-  //     type,
-  //     location,
-  //     message,
-  //     code,
-  //     correction: correction,
-  //     contextMessages: contextMessages,
-  //     url: url,
-  //     astNode: astNode,
-  //     result: result,
-  //     ignoreInfo: ignoreInfo,
-  //     //hasFix: hasFix,
-  //   );
-  // }
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
+  Future<List<SourceChange>> getGenericFixes(
+    AnalysisContext analysisContext,
+    String path,
+    GenericAnalysisError error,
+  ) async =>
+      <SourceChange>[];
 
-  // Location astNodeToLocation(ResolvedUnitResult result, SyntacticEntity node) {
-  //   final CharacterLocation startLocation =
-  //       result.lineInfo.getLocation(node.offset);
-  //   final CharacterLocation endLocation = result.lineInfo.getLocation(node.end);
-  //   return Location(
-  //     result.path,
-  //     node.offset,
-  //     node.length,
-  //     startLocation.lineNumber,
-  //     startLocation.columnNumber,
-  //     endLine: endLocation.lineNumber,
-  //     endColumn: endLocation.columnNumber,
-  //   );
-  // }
+  GenericAnalysisError toGenericAnalysisError({
+    required AnalysisContext analysisContext,
+    required String path,
+    required Location location,
+    required CandiesLintsConfig? config,
+    required String content,
+  }) {
+    CandiesLintsLogger().log(
+      'find error: $code at ${location.startLine} line in $path',
+      root: analysisContext.root,
+    );
+    return GenericAnalysisError(
+      config?.getSeverity(this) ?? severity,
+      type,
+      location,
+      message,
+      code,
+      correction: correction,
+      contextMessages: contextMessages,
+      url: url,
+      content: content,
+      //hasFix: hasFix,
+    );
+  }
 
-  // final Map<SyntacticEntity, AstNode> _astNodes = <SyntacticEntity, AstNode>{};
+  Location sourceSpanToLocation(
+    String path,
+    SourceRange sourceRange,
+    LineInfo lineInfo,
+  ) {
+    final CharacterLocation startLocation =
+        lineInfo.getLocation(sourceRange.offset);
+    final CharacterLocation endLocation = lineInfo.getLocation(sourceRange.end);
+    return Location(
+      path,
+      sourceRange.offset,
+      sourceRange.length,
+      startLocation.lineNumber,
+      startLocation.columnNumber,
+      endLine: endLocation.lineNumber,
+      endColumn: endLocation.columnNumber,
+    );
+  }
 
-  // final Map<String, List<AnalysisError>> _cacheErrorsForFixes =
-  //     <String, List<AnalysisError>>{};
+  final Map<String, List<GenericAnalysisError>> _cacheErrorsForFixes =
+      <String, List<GenericAnalysisError>>{};
 
-  // List<AnalysisError>? clearCacheErrors(String path) {
-  //   return _cacheErrorsForFixes.remove(path);
-  // }
+  List<GenericAnalysisError>? clearCacheErrors(String path) {
+    return _cacheErrorsForFixes.remove(path);
+  }
 
-  // bool analyze(AstNode node) {
-  //   if (!_astNodes.containsKey(node) &&
-  //       _astNodes.keys
-  //           .where(
-  //             (SyntacticEntity element) => element.offset == node.offset,
-  //           )
-  //           .isEmpty) {
-  //     final SyntacticEntity? syntacticEntity = matchLint(node);
-  //     if (syntacticEntity != null) {
-  //       _astNodes[syntacticEntity] = node;
-  //       return true;
-  //     }
-  //   }
+  Iterable<SourceRange> matchLint(
+    String content,
+    String file,
+    LineInfo lineInfo,
+  );
 
-  //   return false;
-  // }
-
-  // SourceRange? matchLint(String content);
+  bool isFileType({
+    required String file,
+    required String type,
+  }) {
+    return path_package.extension(file) == type;
+  }
 }

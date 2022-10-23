@@ -2,6 +2,7 @@
 
 * refactor code to support dart, yaml, generic file lint.
 * support yaml lint 
+* support generic lint 
 
 ## 1.0.2
 

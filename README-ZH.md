@@ -14,6 +14,9 @@
   - [增添你的 lint](#增添你的-lint)
     - [启动插件](#启动插件)
     - [创建一个 lint](#创建一个-lint)
+      - [dart lint](#dart-lint)
+      - [yaml lint](#yaml-lint)
+      - [generic lint](#generic-lint)
   - [调试](#调试)
     - [调试错误](#调试错误)
     - [更新代码](#更新代码)
@@ -31,6 +34,7 @@
   - [注意事项](#注意事项)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
+    - [快速修复只支持 dart 文件.](#快速修复只支持-dart-文件)
 
 * [example](https://github.com/fluttercandies/candies_lints/example)
 
@@ -93,29 +97,46 @@ analyzer:
 我们将在 main 方法中启动我们的插件.
 
 ``` dart
+CandiesLintsPlugin get plugin => CustomLintPlugin();
+
+// This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
   CandiesLintsStarter.start(
     args,
     sendPort,
-    plugin: CustomLintPlugin(),
+    plugin: plugin,
   );
 }
 
 class CustomLintPlugin extends CandiesLintsPlugin {
   @override
   String get name => 'custom_lint';
+
   @override
-  List<CandyLint> get lints => <CandyLint>[
-        // add your line here
-        PerferCandiesClassPrefix(),
-        ...super.lints,
+  List<String> get fileGlobsToAnalyze => const <String>[
+        '**/*.dart',
+        '**/*.yaml',
+        '**/*.json',
       ];
+
+  @override
+  List<DartLint> get dartLints => <DartLint>[
+        // add your dart lint here
+        PerferCandiesClassPrefix(),
+        ...super.dartLints,
+      ];
+
+  @override
+  List<YamlLint> get yamlLints => <YamlLint>[RemoveDependency(package: 'path')];
+
+  @override
+  List<GenericLint> get genericLints => <GenericLint>[RemoveDuplicateValue()];
 }
 ```
 
 ### 创建一个 lint
 
-你只需要创一个新的类来继承 `CandyLint` 即可。
+你只需要创一个新的类来继承 `DartLint` ,`YamlLint`, `GenericLint` 即可。
 
 
 属性: 
@@ -136,13 +157,15 @@ class CustomLintPlugin extends CandiesLintsPlugin {
 | 方法 | 描述  | 重载 |
 | --- | --- | --- |
 | matchLint | 判断是否是你定义的lint | 必须 | 
-| getFixes | 返回快速修复，如果你需要提供 |  | 
+| getFixes | 返回快速修复 |  | 
+| getDartFixes/getYamlFixes/getGenericFixes | 返回快速修复 | getYamlFixes/getGenericFixes 没有效果，保留它以备 dart team 未来某天支持, 查看 [issue](https://github.com/dart-lang/sdk/issues/50306)  | 
 
+#### dart lint
 
-下面是一个 lint 的例子:
+下面是一个 dart lint 的例子:
 
 ``` dart
-class PerferCandiesClassPrefix extends CandyLint {
+class PerferCandiesClassPrefix extends DartLint {
   @override
   String get code => 'perfer_candies_class_prefix';
 
@@ -208,8 +231,114 @@ class PerferCandiesClassPrefix extends CandyLint {
   }
 }
 ```
-## 调试
+#### yaml lint
 
+下面是一个 yaml lint 的例子:
+
+``` dart
+class RemoveDependency extends YamlLint {
+  RemoveDependency({required this.package});
+  final String package;
+  @override
+  String get code => 'remove_${package}_dependency';
+
+  @override
+  String get message => 'don\'t use $package!';
+
+  @override
+  String? get correction => 'Remove $package dependency';
+
+  @override
+  AnalysisErrorSeverity get severity => AnalysisErrorSeverity.WARNING;
+
+  @override
+  Iterable<SourceRange> matchLint(
+    YamlNode root,
+    String content,
+    LineInfo lineInfo,
+  ) sync* {
+    if (root is YamlMap && root.containsKey(PubspecField.DEPENDENCIES_FIELD)) {
+      final YamlNode dependencies =
+          root.nodes[PubspecField.DEPENDENCIES_FIELD]!;
+      if (dependencies is YamlMap && dependencies.containsKey(package)) {
+        final YamlNode get = dependencies.nodes[package]!;
+        int start = dependencies.span.start.offset;
+        final int end = get.span.start.offset;
+        final int index = content.substring(start, end).indexOf('$package: ');
+        start += index;
+        yield SourceRange(start, get.span.end.offset - start);
+      }
+    }
+  }
+}
+```
+
+#### generic lint
+
+下面是一个 generic lint 的例子:
+
+``` dart
+class RemoveDuplicateValue extends GenericLint {
+  @override
+  String get code => 'remove_duplicate_value';
+
+  @override
+  Iterable<SourceRange> matchLint(
+    String content,
+    String file,
+    LineInfo lineInfo,
+  ) sync* {
+    if (isFileType(file: file, type: '.json')) {
+      final Map<dynamic, dynamic> map =
+          jsonDecode(content) as Map<dynamic, dynamic>;
+
+      final Map<dynamic, dynamic> duplicate = <dynamic, dynamic>{};
+      final Map<dynamic, dynamic> checkDuplicate = <dynamic, dynamic>{};
+      for (final dynamic key in map.keys) {
+        final dynamic value = map[key];
+        if (checkDuplicate.containsKey(value)) {
+          duplicate[key] = value;
+          duplicate[checkDuplicate[value]] = value;
+        }
+        checkDuplicate[value] = key;
+      }
+
+      if (duplicate.isNotEmpty) {
+        for (final dynamic key in duplicate.keys) {
+          final int start = content.indexOf('"$key"');
+          final dynamic value = duplicate[key];
+          final int end = content.indexOf(
+                '"$value"',
+                start,
+              ) +
+              value.toString().length +
+              1;
+
+          final int lineNumber = lineInfo.getLocation(end).lineNumber;
+
+          bool hasComma = false;
+          int commaIndex = end;
+          int commaLineNumber = lineInfo.getLocation(commaIndex).lineNumber;
+
+          while (!hasComma && commaLineNumber == lineNumber) {
+            commaIndex++;
+            final String char = content[commaIndex];
+            hasComma = char == ',';
+            commaLineNumber = lineInfo.getLocation(commaIndex).lineNumber;
+          }
+
+          yield SourceRange(start, (hasComma ? commaIndex : end) + 1 - start);
+        }
+      }
+    }
+  }
+
+  @override
+  String get message => 'remove duplicate value';
+}
+```
+
+## 调试
 
 ### 调试错误
 
@@ -224,14 +353,14 @@ class PerferCandiesClassPrefix extends CandyLint {
 │  │        │  └─ debug.dart
 ```
 
-把 root 修改为你想要调试的项目路径
+把 root 修改为你想要调试的项目路径, 默认为 example 的根目录
 
 ``` dart
 import 'dart:io';
 import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
-import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:candies_lints/candies_lints.dart';
 import 'plugin.dart';
 
@@ -243,14 +372,29 @@ Future<void> main(List<String> args) async {
   final CandiesLintsPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
-      if (!myPlugin.shouldAnalyzeFile(file)) {
+      if (!myPlugin.shouldAnalyzeFile(file, context)) {
         continue;
       }
-      final List<AnalysisError> errors = myPlugin.getErrorsFromResultForDebug(
-        await context.currentSession.getResolvedUnit(file)
-            as ResolvedUnitResult,
+
+      final bool isAnalyzed = context.contextRoot.isAnalyzed(file);
+      if (!isAnalyzed) {
+        continue;
+      }
+
+      final List<AnalysisError> errors =
+          (await myPlugin.getAnalysisErrorsForDebug(
+        file,
         context,
-      );
+      ))
+              .toList();
+      for (final AnalysisError error in errors) {
+        final List<AnalysisErrorFixes> fixes = await myPlugin
+            .getAnalysisErrorFixesForDebug(
+                EditGetFixesParams(file, error.location.offset), context)
+            .toList();
+        print(fixes.length);
+      }
+
       print(errors.length);
     }
   }
@@ -434,7 +578,7 @@ analyzer:
 全部的类已某个前缀开始
 
 ``` dart
-class PerferClassPrefix extends CandyLint {
+class PerferClassPrefix extends DartLint {
   PerferClassPrefix(this.prefix);
 
   final String prefix;
@@ -449,7 +593,7 @@ class PerferClassPrefix extends CandyLint {
 asset 资源使用不要直接写字符串，而应该使用定义好的 const
 
 ``` dart
-class PreferAssetConst extends CandyLint {
+class PreferAssetConst extends DartLint {
   @override
   String get code => 'prefer_asset_const';
 }
@@ -459,7 +603,7 @@ class PreferAssetConst extends CandyLint {
 推荐使用命名路由
 
 ``` dart
-class PreferNamedRoutes extends CandyLint {
+class PreferNamedRoutes extends DartLint {
   @override
   String get code => 'prefer_named_routes';
 }
@@ -470,7 +614,7 @@ class PreferNamedRoutes extends CandyLint {
 在使用 `setState` 之前请先检查 `mounted`
 
 ``` dart
-class PerferSafeSetState extends CandyLint {
+class PerferSafeSetState extends DartLint {
   @override
   String get code => 'prefer_safe_setState';
 }
@@ -491,5 +635,7 @@ class PerferSafeSetState extends CandyLint {
 2. 将 `custom_lint` 添加到 `analysis_options.yaml` 中的 `analyzer` `plugins` ，查看 [analysis_options.yaml](https://github.com/fluttercandies/candies_lints/example/analysis_options.yaml)
 
 
+### 快速修复只支持 dart 文件.
 
+[issue](https://github.com/dart-lang/sdk/issues/50306)
 

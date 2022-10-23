@@ -20,7 +20,8 @@ abstract class YamlLint extends CandyLint {
     final List<SourceRange> nodes = matchLint(
       root,
       content,
-    );
+      lineInfo,
+    ).toList();
 
     CandiesLintsLogger().log(
       'find ${nodes.length} yaml lint($code) at $path',
@@ -49,6 +50,9 @@ abstract class YamlLint extends CandyLint {
     }
   }
 
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
   Stream<AnalysisErrorFixes> toYamlAnalysisErrorFixesStream({
     required EditGetFixesParams parameters,
     required AnalysisContext analysisContext,
@@ -70,6 +74,9 @@ abstract class YamlLint extends CandyLint {
     }
   }
 
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
   Future<AnalysisErrorFixes> toYamlAnalysisErrorFixes({
     required YamlAnalysisError error,
     required AnalysisContext analysisContext,
@@ -99,6 +106,9 @@ abstract class YamlLint extends CandyLint {
     );
   }
 
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
   Future<SourceChange> getYamlFix({
     required AnalysisContext analysisContext,
     required String path,
@@ -118,7 +128,9 @@ abstract class YamlLint extends CandyLint {
     return sourceChange;
   }
 
-  /// Quick fix for lint
+  /// It doesn't work for now.
+  /// https://github.com/dart-lang/sdk/issues/50306
+  /// leave it in case dart team maybe support it someday in the future
   Future<List<SourceChange>> getYamlFixes(
     AnalysisContext analysisContext,
     String path,
@@ -179,5 +191,9 @@ abstract class YamlLint extends CandyLint {
     return _cacheErrorsForFixes.remove(path);
   }
 
-  List<SourceRange> matchLint(YamlNode root, String content);
+  Iterable<SourceRange> matchLint(
+    YamlNode root,
+    String content,
+    LineInfo lineInfo,
+  );
 }

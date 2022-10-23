@@ -13,6 +13,7 @@ import 'package:candies_lints/src/extension.dart';
 import 'package:candies_lints/src/ignore_info.dart';
 import 'package:candies_lints/src/error/dart.dart';
 import 'package:candies_lints/src/lints/dart/dart_lint.dart';
+import 'package:candies_lints/src/lints/generic_lint.dart';
 import 'package:candies_lints/src/lints/lint.dart';
 import 'package:candies_lints/src/lints/yaml_lint.dart';
 import 'package:path/path.dart' as path_context;
@@ -31,6 +32,7 @@ class CandiesLintsConfig {
     required List<DartLint> dartLints,
     required this.astVisitor,
     required this.yamlLints,
+    required this.genericLints,
   }) {
     final AnalysisOptions analysisOptions = context.analysisOptions;
     _shouldAnalyze = analysisOptions.enabledPluginNames.contains(pluginName);
@@ -103,6 +105,9 @@ class CandiesLintsConfig {
 
       yamlLints.removeWhere((YamlLint lint) =>
           disableLints.contains(lint.code.toUpperCase()) || ignore(lint));
+
+      genericLints.removeWhere((GenericLint lint) =>
+          disableLints.contains(lint.code.toUpperCase()) || ignore(lint));
     }
   }
 
@@ -111,6 +116,7 @@ class CandiesLintsConfig {
   final AstVisitorBase astVisitor;
   final List<Glob> _includePatterns = <Glob>[];
   final List<YamlLint> yamlLints;
+  final List<GenericLint> genericLints;
   bool _shouldAnalyze = false;
   bool get shouldAnalyze => _shouldAnalyze;
 
@@ -171,7 +177,14 @@ class CandiesLintsConfig {
           analysisContext: analysisContext,
         );
       }
-    } else {}
+    } else {
+      for (final GenericLint lint in genericLints) {
+        yield* lint.toGenericAnalysisErrorFixesStream(
+          parameters: parameters,
+          analysisContext: analysisContext,
+        );
+      }
+    }
   }
 
   void clearCacheErrors(String file) {
@@ -181,6 +194,10 @@ class CandiesLintsConfig {
       for (final YamlLint lint in yamlLints) {
         lint.clearCacheErrors(file);
       }
-    } else {}
+    } else {
+      for (final GenericLint lint in genericLints) {
+        lint.clearCacheErrors(file);
+      }
+    }
   }
 }
