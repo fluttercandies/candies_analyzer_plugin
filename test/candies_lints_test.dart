@@ -12,6 +12,7 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer/src/ignore_comments/ignore_info.dart';
 import 'package:candies_lints/src/ignore_info.dart';
 import 'package:candies_lints/src/plugin.dart';
+import 'package:analyzer/src/util/glob.dart';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
@@ -80,9 +81,9 @@ Future<void> main() async {
     for (final AnalysisContext context in collection.contexts) {
       final AnalysisOptions sss = context.analysisOptions;
 
-      final String? path = context.contextRoot.optionsFile?.path;
-      if (path != null) {
-        final File file = File(path);
+      final String? optionsFilePath = context.contextRoot.optionsFile?.path;
+      if (optionsFilePath != null) {
+        final File file = File(optionsFilePath);
         final YamlMap yaml = loadYaml(file.readAsStringSync()) as YamlMap;
 
         if (yaml.containsKey('include')) {
@@ -99,6 +100,40 @@ Future<void> main() async {
             print('ddd');
           }
           print('dd');
+        }
+        if (yaml.nodes['custom_lint'] is YamlMap) {
+          final YamlMap pluginConfig = yaml.nodes['custom_lint'] as YamlMap;
+          if (pluginConfig.nodes['include'] is YamlList) {
+            final YamlList includePatterns =
+                pluginConfig.nodes['include'] as YamlList;
+
+            final List<Glob> _includePatterns = includePatterns
+                .map((dynamic e) => Glob(path.separator, e.toString()))
+                .toList();
+
+            bool include(String path) {
+              if (_includePatterns.isEmpty) {
+                return true;
+              }
+
+              for (final Glob includePattern in _includePatterns) {
+                if (includePattern.matches(path)) {
+                  return true;
+                }
+              }
+              return false;
+            }
+
+            final String testFile = path.join(
+                path.current, 'example', 'lib', 'include', 'test.dart');
+
+            final String relative =
+                path.relative(testFile, from: context.contextRoot.root.path);
+
+            final bool ddd = include(relative);
+
+            print('ddd');
+          }
         }
         print('dd');
       }

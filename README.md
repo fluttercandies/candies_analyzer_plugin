@@ -21,6 +21,7 @@ The plugin to help create custom lint quickly.
   - [Log](#log)
   - [Config](#config)
     - [disable a lint](#disable-a-lint)
+    - [include](#include)
     - [custom a lint](#custom-a-lint)
   - [Note](#note)
 
@@ -366,7 +367,7 @@ analyzer:
     - lib/exclude/*.dart
 ```
 
-3. 
+3. disable a lint
 
 ``` yaml
 linter:
@@ -375,6 +376,19 @@ linter:
     perfer_candies_class_prefix: false 
 ```
 
+### include
+
+we can define `include` tag under `custom_lint` (it's your plugin name).
+it means that we only analyze the include files.
+
+``` yaml
+
+# your plugin name
+custom_lint:
+  # if we define this, we only analyze include files
+  include: 
+    - lib/include/*.dart
+```
 
 ### custom a lint
 
@@ -393,8 +407,11 @@ analyzer:
 ## Note 
 
 
-1. don't write `print` in plugin, analysis server will crash.
-2. you must add `custom_lint` into dev_dependencies in `pubspec.yaml` and add `custom_lint` into analyzer plugins in `analysis_options.yaml` which package or project you want to analysis.
+1. don't write `print` in the process of analyzing in your plugin, analysis server will crash.
+2. you must do following things to support your project to be analyzed.
+   
+   add `custom_lint` into `dev_dependencies` in `pubspec.yaml` , see [pubspec.yaml](https://github.com/fluttercandies/candies_lints/example/pubspec.yaml)
+   add `custom_lint` into `analyzer` `plugins` in `analysis_options.yaml` see [analysis_options.yaml](https://github.com/fluttercandies/candies_lints/example/analysis_options.yaml)
 
 
 

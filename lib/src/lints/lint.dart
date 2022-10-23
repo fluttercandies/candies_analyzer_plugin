@@ -273,8 +273,8 @@ abstract class CandyLint {
   final Map<String, List<CandyAnalysisError>> _cacheErrorsForFixes =
       <String, List<CandyAnalysisError>>{};
 
-  void clearCacheErrors(String path) {
-    _cacheErrorsForFixes.remove(path);
+  List<CandyAnalysisError>? clearCacheErrors(String path) {
+    return _cacheErrorsForFixes.remove(path);
   }
 
   bool analyze(AstNode node) {

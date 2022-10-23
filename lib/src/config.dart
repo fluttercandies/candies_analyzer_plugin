@@ -1,3 +1,5 @@
+// ignore_for_file: implementation_imports
+
 import 'dart:io';
 import 'dart:async';
 import 'package:analyzer/dart/analysis/analysis_context.dart';
@@ -9,11 +11,13 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:candies_lints/src/extension.dart';
 import 'package:candies_lints/src/ignore_info.dart';
+import 'package:candies_lints/src/lints/error.dart';
 import 'package:candies_lints/src/lints/lint.dart';
 import 'package:path/path.dart' as path;
 import 'package:pubspec_parse/pubspec_parse.dart';
 import 'package:yaml/yaml.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/src/util/glob.dart';
 part 'ast_visitor.dart';
 
 /// The class to handle pubspec.yaml and analysis_options.yaml
@@ -49,9 +53,9 @@ class CandiesLintsConfig {
 
     if (shouldAnalyze) {
       final List<String> disableLints = <String>[];
-      final String? path = context.contextRoot.optionsFile?.path;
-      if (path != null) {
-        final File file = File(path);
+      final String? optionsFilePath = context.contextRoot.optionsFile?.path;
+      if (optionsFilePath != null) {
+        final File file = File(optionsFilePath);
         final YamlMap yaml = loadYaml(file.readAsStringSync()) as YamlMap;
 
         // if (yaml.containsKey('include')) {
@@ -75,6 +79,16 @@ class CandiesLintsConfig {
             // else if (linter.nodes['rules'] is YamlList) {}
           }
         }
+        if (yaml.nodes[pluginName] is YamlMap) {
+          final YamlMap pluginConfig = yaml.nodes[pluginName] as YamlMap;
+          if (pluginConfig.nodes['include'] is YamlList) {
+            final YamlList includePatterns =
+                pluginConfig.nodes['include'] as YamlList;
+            _includePatterns.addAll(includePatterns
+                .map((dynamic e) => Glob(path.separator, e.toString()))
+                .toList());
+          }
+        }
       }
 
       astVisitor._lints = lints
@@ -87,7 +101,7 @@ class CandiesLintsConfig {
   final AnalysisContext context;
   final String pluginName;
   final AstVisitorBase astVisitor;
-
+  final List<Glob> _includePatterns = <Glob>[];
   bool _shouldAnalyze = false;
   bool get shouldAnalyze => _shouldAnalyze;
 
@@ -109,5 +123,21 @@ class CandiesLintsConfig {
       }
     }
     return lint.severity;
+  }
+
+  bool include(String input) {
+    if (_includePatterns.isEmpty) {
+      return true;
+    }
+
+    final String relative =
+        path.relative(input, from: context.contextRoot.root.path);
+
+    for (final Glob includePattern in _includePatterns) {
+      if (includePattern.matches(relative)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

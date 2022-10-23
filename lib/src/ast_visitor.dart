@@ -46,9 +46,12 @@ mixin AstVisitorBase on AstVisitor<void> {
     }
   }
 
-  void clearCacheErrors(String path) {
+  Iterable<CandyAnalysisError> clearCacheErrors(String path) sync* {
     for (final CandyLint lint in lints) {
-      lint.clearCacheErrors(path);
+      final List<CandyAnalysisError>? list = lint.clearCacheErrors(path);
+      if (list != null) {
+        yield* list;
+      }
     }
   }
 }

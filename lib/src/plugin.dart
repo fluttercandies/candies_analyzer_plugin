@@ -121,8 +121,18 @@ class CandiesLintsPlugin extends ServerPlugin {
     }
 
     final CandiesLintsConfig? config = _configs[analysisContext.root];
-    if (config == null || !config.shouldAnalyze) {
-      config?.astVisitor.clearCacheErrors(path);
+    if (config == null || !config.shouldAnalyze || !config.include(path)) {
+      if (config != null) {
+        final List<CandyAnalysisError> clearErrors =
+            config.astVisitor.clearCacheErrors(path).toList();
+        if (clearErrors.isNotEmpty) {
+          // send a notification that we ignore the errors in this file.
+          channel.sendNotification(
+            AnalysisErrorsParams(path, <AnalysisError>[]).toNotification(),
+          );
+        }
+      }
+
       return;
     }
 
@@ -138,15 +148,16 @@ class CandiesLintsPlugin extends ServerPlugin {
         config.astVisitor,
         config: config,
       );
-      if (errors.isNotEmpty) {
-        CandiesLintsLogger().log(
-          'find ${errors.length} errors in ${unitResult.path}',
-          root: analysisContext.root,
-        );
-        channel.sendNotification(
-          AnalysisErrorsParams(path, errors).toNotification(),
-        );
-      }
+
+      CandiesLintsLogger().log(
+        'find ${errors.length} errors in ${unitResult.path}',
+        root: analysisContext.root,
+      );
+      // if errors is empty, we still need to send a notification
+      // to clear errors if it has.
+      channel.sendNotification(
+        AnalysisErrorsParams(path, errors).toNotification(),
+      );
     } on Exception catch (e, stackTrace) {
       CandiesLintsLogger().logError(
         'analyze file failed!',
@@ -204,7 +215,7 @@ class CandiesLintsPlugin extends ServerPlugin {
       final String root = context.root;
 
       final CandiesLintsConfig? config = _configs[root];
-      if (config == null || !config.shouldAnalyze) {
+      if (config == null || !config.shouldAnalyze || !config.include(path)) {
         return EditGetFixesResult(const <AnalysisErrorFixes>[]);
       }
 

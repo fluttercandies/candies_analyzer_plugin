@@ -37,3 +37,9 @@ linter:
     #- prefer_single_quotes
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+# your plugin name
+custom_lint:
+  # if we define this, we only analyze include files
+  include: 
+    # - lib/include/*.dart
