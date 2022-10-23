@@ -13,7 +13,7 @@ class PerferSafeSetState extends CandyLint {
   String get code => 'prefer_safe_setState';
 
   @override
-  String get message => 'prefer to check mounted before setState';
+  String get message => 'Prefer to check mounted before setState';
 
   @override
   String? get correction => 'Add if(mounted){} for setState';

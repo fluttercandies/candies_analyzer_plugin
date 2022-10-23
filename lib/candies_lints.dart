@@ -1,5 +1,8 @@
 library candies_lints;
 
+export 'package:yaml/yaml.dart';
+export 'package:pubspec_parse/pubspec_parse.dart';
+
 export 'src/plugin_starter.dart';
 export 'src/plugin.dart';
 export 'src/lints/lint.dart';

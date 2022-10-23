@@ -2,57 +2,58 @@
 
 [![pub package](https://img.shields.io/pub/v/candies_lints.svg)](https://pub.dartlang.org/packages/candies_lints) [![GitHub stars](https://img.shields.io/github/stars/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/stargazers) [![GitHub forks](https://img.shields.io/github/forks/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/network) [![GitHub license](https://img.shields.io/github/license/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/issues) <a target="_blank" href="https://jq.qq.com/?_wv=1027&k=5bcc0gy"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="flutter-candies" title="flutter-candies"></a>
 
-Languages: English | [中文简体](README-ZH.md)
+语言: [English](README.md) | 中文简体
 
-## Description
+## 描述
 
-The plugin to help create custom lint quickly.
+帮助快速创建自定义 lint 的插件.
 
 - [candies_lints](#candies_lints)
-  - [Description](#description)
-  - [Create Template](#create-template)
-  - [Add your lint](#add-your-lint)
-    - [start plugin](#start-plugin)
-    - [create a lint](#create-a-lint)
-  - [Debug](#debug)
-    - [debug lint](#debug-lint)
-    - [update code](#update-code)
-    - [restart server](#restart-server)
+  - [描述](#描述)
+  - [模版创建](#模版创建)
+  - [增添你的 lint](#增添你的-lint)
+    - [启动插件](#启动插件)
+    - [创建一个 lint](#创建一个-lint)
+  - [调试](#调试)
+    - [调试错误](#调试错误)
+    - [更新代码](#更新代码)
+    - [重启 dart analysis 服务](#重启-dart-analysis-服务)
   - [Log](#log)
-  - [Config](#config)
-    - [disable a lint](#disable-a-lint)
-    - [include](#include)
-    - [custom lint severity](#custom-lint-severity)
+  - [配置](#配置)
+    - [禁止一个 lint](#禁止一个-lint)
+    - [包含文件](#包含文件)
+    - [自定义 lint 严肃性](#自定义-lint-严肃性)
   - [Default lints](#default-lints)
     - [PerferClassPrefix](#perferclassprefix)
     - [PreferAssetConst](#preferassetconst)
     - [PreferNamedRoutes](#prefernamedroutes)
     - [PerferSafeSetState](#perfersafesetstate)
-  - [Note](#note)
+  - [注意事项](#注意事项)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
 
 * [example](https://github.com/fluttercandies/candies_lints/example)
 
-* [analyzer_plugin doc](https://github.com/dart-lang/sdk/blob/master/pkg/analyzer_plugin/doc/tutorial/tutorial.md)
-## Create Template
+* [analyzer_plugin 文档](https://github.com/dart-lang/sdk/blob/master/pkg/analyzer_plugin/doc/tutorial/tutorial.md)
+  
+## 模版创建
 
-1. activate plugin
+1. 激活插件
 
-   run `dart pub global activate candies_lints`
+   执行命令 `dart pub global activate candies_lints`
 
 
-2. cd to your project
+2. 到你的项目的根目录
 
-   Let us suppose:
+   假设:
    
-   your project is `example`
+   你的项目叫做 `example`
    
-   your lint plugin is `custom_lint`
+   你想创建的插件叫做 `custom_lint`
    
-   run `candies_lints custom_lint`, a simple lint plugin is generated.
+   执行命令 `candies_lints custom_lint`, 一个简单插件模板创建成功.
 
-3. add `custom_lint` into `dev_dependencies` of the root `pubspec.yaml`  
+3. 将 `custom_lint` 增加到 根目录 `pubspec.yaml` 的 `dev_dependencies` 中
 
 ```yaml
 dev_dependencies:
@@ -61,7 +62,7 @@ dev_dependencies:
     path: custom_lint/
 ```
 
-4. add `custom_lint` into `analyzer plugins` of the root `analysis_options.yaml`
+4. 将 `custom_lint` 增加到根目录 `analysis_options.yaml` 的 `analyzer plugins` tag 下面
 
 ```yaml
 analyzer:
@@ -70,11 +71,11 @@ analyzer:
     custom_lint
 ```
 
-after analysis are finished, you will see some custom lint in your ide.
+当分析结束的时候，在你的 ide 中可以看到一些自定义的 lint 。
 
-## Add your lint
+## 增添你的 lint
 
-find `plugin.dart` base on following project tree
+在下面的项目结构下面找到  `plugin.dart`
 
 ```
 ├─ example
@@ -85,11 +86,11 @@ find `plugin.dart` base on following project tree
 │  │        │  └─ plugin.dart
 ```
 
-`plugin.dart` is the entrance of plugin.
+`plugin.dart` 是整个插件的入口。
 
-### start plugin
+### 启动插件
 
-we start plugin in this file.
+我们将在 main 方法中启动我们的插件.
 
 ``` dart
 void main(List<String> args, SendPort sendPort) {
@@ -112,33 +113,33 @@ class CustomLintPlugin extends CandiesLintsPlugin {
 }
 ```
 
-### create a lint
+### 创建一个 lint
 
-you just need to make a custom lint which extends `CandyLint`.
+你只需要创一个新的类来继承 `CandyLint` 即可。
 
 
-Properties: 
+属性: 
 
-| Property | Description  | Default |
+| 属性 | 描述  | 默认 |
 | --- | --- | --- |
-| code | The name, as a string, of the error code associated with this error. | required | 
-| message | The message to be displayed for this error. The message should indicate what is wrong with the code and why it is wrong. | required | 
-| url | The URL of a page containing documentation associated with this error. |  | 
-| type | The type of the error. <br/>CHECKED_MODE_COMPILE_TIME_ERROR<br/>COMPILE_TIME_ERROR<br/>HINT<br/>LINT<br/>STATIC_TYPE_WARNING<br/>STATIC_WARNING<br/>SYNTACTIC_ERROR<br/>TODO | The default is LINT. | 
-| severity | The severity of the error.<br/>INFO<br/>WARNING<br/>ERROR | The default is INFO. | 
-| correction | The correction message to be displayed for this error. The correction message should indicate how the user can fix the error. The field is omitted if there is no correction message associated with the error code. |  | 
-| contextMessages | Additional messages associated with this diagnostic that provide context to help the user understand the diagnostic. |  | 
+| code | 这个错误的名字，唯一. | 必填 | 
+| message | 描述这个错误的信息 | required | 
+| url | 这个错误文档的链接. |  | 
+| type | 在IDE中错误的类型. <br/>CHECKED_MODE_COMPILE_TIME_ERROR<br/>COMPILE_TIME_ERROR<br/>HINT<br/>LINT<br/>STATIC_TYPE_WARNING<br/>STATIC_WARNING<br/>SYNTACTIC_ERROR<br/>TODO | 默认为 LINT. | 
+| severity | 这个错误的严肃性(一般我们修改的是这个).<br/>INFO<br/>WARNING<br/>ERROR | 默认为 INFO. | 
+| correction | 修复这个错误的一些描述. |  | 
+| contextMessages | 额外的信息帮助修复这个错误。 |  | 
 
 
-Important methodes:
+重要的方法:
 
-| Method | Description  | Override |
+| 方法 | 描述  | 重载 |
 | --- | --- | --- |
-| matchLint | return whether is match lint. | must | 
-| getFixes | return fixes if has. |  | 
+| matchLint | 判断是否是你定义的lint | 必须 | 
+| getFixes | 返回快速修复，如果你需要提供 |  | 
 
 
-Here is a demo for a custom lint:
+下面是一个 lint 的例子:
 
 ``` dart
 class PerferCandiesClassPrefix extends CandyLint {
@@ -207,12 +208,12 @@ class PerferCandiesClassPrefix extends CandyLint {
   }
 }
 ```
-## Debug
+## 调试
 
 
-### debug lint
+### 调试错误
 
-find `debug.dart` base on following project tree
+在下面的项目结构下面找到  `debug.dart`，已经自动为你创建了 debug 的例子。你可以通过调试来编写符合你条件的 lint
 
 ```
 ├─ example
@@ -223,8 +224,8 @@ find `debug.dart` base on following project tree
 │  │        │  └─ debug.dart
 ```
 
-change debugFilePath to the file path which you want to debug.
- 
+把 debugFilePath 修改为你想要调试的文件
+
 ``` dart
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
@@ -244,7 +245,7 @@ Future<void> main(List<String> args) async {
 }
 ```
 
-### update code
+### 更新代码
 
 ```
 ├─ example
@@ -253,22 +254,23 @@ Future<void> main(List<String> args) async {
 │  │     └─ analyzer_plugin
 ```
 
-you have two options to update new code into dartServer.
+你有2种方式更新代码到 dartServer。
 
-1. delete .plugin_manager folder
 
-Note, `analyzer_plugin` folder will be copy into following, and it has cache.
+1. 删除 .plugin_manager 文件夹
+
+Note, `analyzer_plugin` 文件夹下面的东西都会被复制到 `.plugin_manager` 下面, 它是有缓存的.
 
 macos:  `/Users/user_name/.dartServer/.plugin_manager/`
 
 windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
 
-if your code is changed, please remove the files under `.plugin_manager`.
+如果你的代码改变了, 请删除掉 `.plugin_manager` 下面的文件
 
 
-2. write new code under custom_lint folder
+2. 把新的代码写到 custom_lint 下面
 
-you can write new code under custom_lint, for exmaple, in custom_lint.dart. 
+你可以把新代码写到 custom_lint 下面, 比如在 custom_lint.dart. 
 
 ```
 ├─ example
@@ -277,11 +279,12 @@ you can write new code under custom_lint, for exmaple, in custom_lint.dart.
 │  │  │  └─ custom_lint.dart
 ```
 
-so you should add `custom_lint` dependencies into `analyzer_plugin\pubspec.yaml`
+如果这样的话，你必须增加 `custom_lint` 引用到 `analyzer_plugin\pubspec.yaml` 当中
 
-you should use `absolute path` due to analyzer_plugin folder will copy to `.plugin_manager`.
+你必须使用 `绝对路径`，因为 analyzer_plugin 文件夹是会被复制到 `.plugin_manager` 下面的.
 
-if your don't publish `custom_lint` as new package, i don't suggest do as this.
+如果你不是要发布一个新的 package 的话，我不建议你使用第2种方式。
+
 
 ```
 ├─ example
@@ -304,34 +307,34 @@ dependencies:
   analyzer_plugin: any
 ```
 
-### restart server
+### 重启 dart analysis 服务
 
-after update code, you should restart analysis server by following steps in vscode.
+更新完毕代码之后，你可以通过在 vscode 中，通过下面的方式重启服务。
 
-1. find `Command Palette` in `View`
+1. 在 `View` 下面找到 `Command Palette`
 
 ![](command_palette.png)
 
-2. enter `Restart Analysis Server`
+2. 输入 `Restart Analysis Server`
 
 ![](analysis_command.png)
 
 
-now, you can see the new change.
+分析结束之后，你可以看到最新的结果.
 
 ## Log
 
-Under the project  `custom_lint.log` will be generated.
+在被分析的项目根目录会生成  `custom_lint.log`，用于查看分析过程的信息。
 
-1. you can close Log. 
+1. 你可以关闭. 
 
    `CandiesLintsLogger().shouldLog = false;`
 
-2. you can custom log name 
+2. 你可以更改日志的名字 
 
    `CandiesLintsLogger().logFileName = 'your name';`
 
-3. log info
+3. 记录信息
    
 ``` dart
    CandiesLintsLogger().log(
@@ -341,7 +344,7 @@ Under the project  `custom_lint.log` will be generated.
       );
 ```
 
-4. log error
+4. 记录错误
 
 ``` dart
    CandiesLintsLogger().logError(
@@ -352,13 +355,13 @@ Under the project  `custom_lint.log` will be generated.
    );
 ```
 
-## Config
+## 配置
 
-### disable a lint
+### 禁止一个 lint
 
-As default, all of the custom lints are enable. And you can also write a config in analysis_options.yaml to disable they.
+编写的自定义 lints 默认是全部开启的。当然你可以通过在 analysis_options.yaml 增加配置来禁止它。
 
-1. add ignore for a lint.
+1. 使用 ignore tag 来禁止.
 
 ``` yaml
 analyzer:
@@ -366,7 +369,7 @@ analyzer:
     perfer_candies_class_prefix: ignore
 ```
 
-2. exclude files
+2. 使用 exclude 来过滤掉不想分析的文件
   
 ``` yaml
 analyzer:
@@ -374,7 +377,7 @@ analyzer:
     - lib/exclude/*.dart
 ```
 
-3. disable a lint
+3. 通过将某个lint 设置为 false
 
 ``` yaml
 linter:
@@ -383,10 +386,10 @@ linter:
     perfer_candies_class_prefix: false 
 ```
 
-### include
+### 包含文件
 
-we can define `include` tag under `custom_lint` (it's your plugin name).
-it means that we only analyze the include files.
+我们可以通过在 `custom_lint`(你定义的插件名字) 下面的 `include` 标记下面增加包含的文件。
+如果我们做了这个设置，那么我们就只会分析这些文件。
 
 ``` yaml
 
@@ -397,13 +400,13 @@ custom_lint:
     - lib/include/*.dart
 ```
 
-### custom lint severity
+### 自定义 lint 严肃性
 
-you can change lint severity by following setting.
+你可以设置某个 lint 的严肃性。
 
-change the severity of `perfer_candies_class_prefix` from `info` to `warning`.
+比如 `perfer_candies_class_prefix` 把它的严肃性从 `info` 改为 `warning`.
 
-support `warning` , `info` , `error`.
+支持 `warning` , `info` , `error`.
 
 ``` yaml
 analyzer:
@@ -416,7 +419,7 @@ analyzer:
 
 ### PerferClassPrefix
 
-Define a class name start with prefix
+全部的类已某个前缀开始
 
 ``` dart
 class PerferClassPrefix extends CandyLint {
@@ -431,7 +434,7 @@ class PerferClassPrefix extends CandyLint {
 
 ### PreferAssetConst
 
-Prefer to use asset const instead of a string.
+asset 资源使用不要直接写字符串，而应该使用定义好的 const
 
 ``` dart
 class PreferAssetConst extends CandyLint {
@@ -441,7 +444,7 @@ class PreferAssetConst extends CandyLint {
 ```
 ### PreferNamedRoutes
 
-Prefer to use named routes.
+推荐使用命名路由
 
 ``` dart
 class PreferNamedRoutes extends CandyLint {
@@ -452,7 +455,7 @@ class PreferNamedRoutes extends CandyLint {
 
 ### PerferSafeSetState
 
-Prefer to check mounted before setState
+在使用 `setState` 之前请先检查 `mounted`
 
 ``` dart
 class PerferSafeSetState extends CandyLint {
@@ -462,18 +465,18 @@ class PerferSafeSetState extends CandyLint {
 ```
 
 
-## Note 
+## 注意事项 
 ### print lag
 
-don't write `print` in the process of analyzing in your plugin, analysis will lag.
+不要在插件的分析代码中使用 `print` ，这会导致 analysis 卡顿
 
 ### pubspec.yaml and analysis_options.yaml
 
-you must do following things to support your project to be analyzed.
+只有当你在 `pubspec.yaml` 和 `analysis_options.yaml` 中添加了 `custom_lint`，分析才会进行
    
-1. add `custom_lint` into `dev_dependencies` in `pubspec.yaml` , see [pubspec.yaml](https://github.com/fluttercandies/candies_lints/example/pubspec.yaml)
+1. 将 `custom_lint` 添加到  `pubspec.yaml` 中的 `dev_dependencies`  , 查看 [pubspec.yaml](https://github.com/fluttercandies/candies_lints/example/pubspec.yaml)
    
-2. add `custom_lint` into `analyzer` `plugins` in `analysis_options.yaml` see [analysis_options.yaml](https://github.com/fluttercandies/candies_lints/example/analysis_options.yaml)
+2. 将 `custom_lint` 添加到 `analysis_options.yaml` 中的 `analyzer` `plugins` ，查看 [analysis_options.yaml](https://github.com/fluttercandies/candies_lints/example/analysis_options.yaml)
 
 
 
