@@ -21,14 +21,24 @@ Future<void> main() async {
   final String debugFilePath =
       path.join(path.current, 'example', 'lib', 'main.dart');
   test('getErrors', () async {
-    final ResolvedUnitResult result =
-        await resolveFile2(path: debugFilePath) as ResolvedUnitResult;
+    final String debugFilePath = Directory.current.parent.parent.parent.path;
+    final AnalysisContextCollection collection =
+        AnalysisContextCollection(includedPaths: <String>[debugFilePath]);
 
-    final CandiesLintsPlugin plugin = CandiesLintsPlugin();
-    final List<AnalysisError> errors = CandiesLintsPlugin().getErrorsFromResult(
-      result,
-      plugin.astVisitor,
-    );
+    final CandiesLintsPlugin myPlugin = CandiesLintsPlugin();
+    for (final AnalysisContext context in collection.contexts) {
+      for (final String file in context.contextRoot.analyzedFiles()) {
+        if (!myPlugin.shouldAnalyzeFile(file)) {
+          continue;
+        }
+        final List<AnalysisError> errors = myPlugin.getErrorsFromResultForDebug(
+          await context.currentSession.getResolvedUnit(file)
+              as ResolvedUnitResult,
+          context,
+        );
+        print(errors.length);
+      }
+    }
     //LineInfo lineInfo = LineInfo.fromContent(result.content);
   });
 

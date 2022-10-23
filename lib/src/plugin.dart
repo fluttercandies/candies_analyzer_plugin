@@ -27,7 +27,7 @@ import 'package:candies_lints/src/lints/error.dart';
 import 'package:candies_lints/src/lints/lint.dart';
 import 'package:candies_lints/src/lints/prefer_asset_const.dart';
 import 'package:candies_lints/src/lints/prefer_named_routes.dart';
-import 'package:candies_lints/src/lints/prefer_safe_setState.dart';
+import 'package:candies_lints/src/lints/prefer_safe_setstate.dart';
 import 'package:analyzer/error/error.dart' as error;
 import 'package:candies_lints/src/config.dart';
 
@@ -143,11 +143,8 @@ class CandiesLintsPlugin extends ServerPlugin {
       );
 
       final ResolvedUnitResult unitResult = await getResolvedUnitResult(path);
-      final List<AnalysisError> errors = getErrorsFromResult(
-        unitResult,
-        config.astVisitor,
-        config: config,
-      );
+      final List<AnalysisError> errors =
+          getErrorsFromResult(unitResult, config);
 
       CandiesLintsLogger().log(
         'find ${errors.length} errors in ${unitResult.path}',
@@ -175,13 +172,12 @@ class CandiesLintsPlugin extends ServerPlugin {
   /// Return AnalysisError List base on ResolvedUnitResult.
   List<AnalysisError> getErrorsFromResult(
     ResolvedUnitResult unitResult,
-    AstVisitorBase astVisitor, {
-    CandiesLintsConfig? config,
-  }) {
-    unitResult.unit.visitChildren(astVisitor);
+    CandiesLintsConfig config,
+  ) {
+    unitResult.unit.visitChildren(config.astVisitor);
     final CandiesLintsIgnoreInfo ignore =
         CandiesLintsIgnoreInfo.forDart(unitResult);
-    final List<AnalysisError> errors = astVisitor
+    final List<AnalysisError> errors = config.astVisitor
         .getAnalysisErrors(
           result: unitResult,
           ignore: ignore,
@@ -189,6 +185,22 @@ class CandiesLintsPlugin extends ServerPlugin {
         )
         .toList();
     return errors;
+  }
+
+  /// Return AnalysisError List base on ResolvedUnitResult.
+  ///
+  List<AnalysisError> getErrorsFromResultForDebug(
+    ResolvedUnitResult unitResult,
+    AnalysisContext context,
+  ) {
+    final CandiesLintsConfig config =
+        _configs[context.root] ??= CandiesLintsConfig(
+      context: context,
+      pluginName: name,
+      lints: lints,
+      astVisitor: astVisitor,
+    );
+    return getErrorsFromResult(unitResult, config);
   }
 
   /// Handle an 'edit.getFixes' request.

@@ -224,24 +224,36 @@ class PerferCandiesClassPrefix extends CandyLint {
 │  │        │  └─ debug.dart
 ```
 
-把 debugFilePath 修改为你想要调试的文件
+把 root 修改为你想要调试的项目路径
 
 ``` dart
+import 'dart:io';
+import 'package:analyzer/dart/analysis/analysis_context.dart';
+import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
-import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:candies_lints/candies_lints.dart';
 import 'plugin.dart';
-import 'package:path/path.dart' as path;
 
 Future<void> main(List<String> args) async {
-  final String debugFilePath =
-      path.join('your project root', 'lib', 'main.dart');
+  final String root = Directory.current.parent.parent.parent.path;
+  final AnalysisContextCollection collection =
+      AnalysisContextCollection(includedPaths: <String>[root]);
 
-  final ResolvedUnitResult result =
-      await resolveFile2(path: debugFilePath) as ResolvedUnitResult;
-
-  final List<AnalysisError> errors = plugin.getErrorsFromResult(result);
-  print(errors.length);
+  final CandiesLintsPlugin myPlugin = plugin;
+  for (final AnalysisContext context in collection.contexts) {
+    for (final String file in context.contextRoot.analyzedFiles()) {
+      if (!myPlugin.shouldAnalyzeFile(file)) {
+        continue;
+      }
+      final List<AnalysisError> errors = myPlugin.getErrorsFromResultForDebug(
+        await context.currentSession.getResolvedUnit(file)
+            as ResolvedUnitResult,
+        context,
+      );
+      print(errors.length);
+    }
+  }
 }
 ```
 
