@@ -144,9 +144,9 @@ class CustomLintPlugin extends CandiesLintsPlugin {
 | 属性 | 描述  | 默认 |
 | --- | --- | --- |
 | code | 这个错误的名字，唯一. | 必填 | 
-| message | 描述这个错误的信息 | required | 
+| message | 描述这个错误的信息 | 必填 | 
 | url | 这个错误文档的链接. |  | 
-| type | 在IDE中错误的类型. <br/>CHECKED_MODE_COMPILE_TIME_ERROR<br/>COMPILE_TIME_ERROR<br/>HINT<br/>LINT<br/>STATIC_TYPE_WARNING<br/>STATIC_WARNING<br/>SYNTACTIC_ERROR<br/>TODO | 默认为 LINT. | 
+| type | 错误的类型. <br/>CHECKED_MODE_COMPILE_TIME_ERROR<br/>COMPILE_TIME_ERROR<br/>HINT<br/>LINT<br/>STATIC_TYPE_WARNING<br/>STATIC_WARNING<br/>SYNTACTIC_ERROR<br/>TODO | 默认为 LINT. | 
 | severity | 这个错误的严肃性(一般我们修改的是这个).<br/>INFO<br/>WARNING<br/>ERROR | 默认为 INFO. | 
 | correction | 修复这个错误的一些描述. |  | 
 | contextMessages | 额外的信息帮助修复这个错误。 |  | 
@@ -157,7 +157,6 @@ class CustomLintPlugin extends CandiesLintsPlugin {
 | 方法 | 描述  | 重载 |
 | --- | --- | --- |
 | matchLint | 判断是否是你定义的lint | 必须 | 
-| getFixes | 返回快速修复 |  | 
 | getDartFixes/getYamlFixes/getGenericFixes | 返回快速修复 | getYamlFixes/getGenericFixes 没有效果，保留它以备 dart team 未来某天支持, 查看 [issue](https://github.com/dart-lang/sdk/issues/50306)  | 
 
 #### dart lint
@@ -188,7 +187,7 @@ class PerferCandiesClassPrefix extends DartLint {
   String get message => 'Define a class name start with Candies';
 
   @override
-  Future<List<SourceChange>> getFixes(
+  Future<List<SourceChange>> getDartFixes(
     ResolvedUnitResult resolvedUnitResult,
     AstNode astNode,
   ) async {
@@ -196,7 +195,7 @@ class PerferCandiesClassPrefix extends DartLint {
     final Token nameNode = (astNode as ClassDeclaration).name2;
     final String nameString = nameNode.toString();
     return <SourceChange>[
-      await getFix(
+      await getDartFix(
         resolvedUnitResult: resolvedUnitResult,
         message: 'Use Candies as a class prefix.',
         buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
@@ -517,9 +516,9 @@ dependencies:
 
 ### 禁止一个 lint
 
-编写的自定义 lints 默认是全部开启的。当然你可以通过在 analysis_options.yaml 增加配置来禁止它。
+编写的自定义 lints 默认是全部开启的。当然你可以通过在 analysis_options.yaml 增加配置来禁用它。
 
-1. 使用 ignore tag 来禁止.
+1. 使用 ignore tag 来禁用.
 
 ``` yaml
 analyzer:
@@ -598,6 +597,8 @@ asset 资源使用不要直接写字符串，而应该使用定义好的 const
 class PreferAssetConst extends DartLint {
   @override
   String get code => 'prefer_asset_const';
+  @override
+  String? get url => 'https://pub.flutter-io.cn/packages/assets_generator';    
 }
 ```
 ### PreferNamedRoutes
@@ -608,6 +609,8 @@ class PreferAssetConst extends DartLint {
 class PreferNamedRoutes extends DartLint {
   @override
   String get code => 'prefer_named_routes';
+  @override
+  String? get url => 'https://pub.flutter-io.cn/packages/ff_annotation_route';    
 }
 ```
 

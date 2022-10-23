@@ -187,7 +187,7 @@ class PerferCandiesClassPrefix extends DartLint {
   String get message => 'Define a class name start with Candies';
 
   @override
-  Future<List<SourceChange>> getFixes(
+  Future<List<SourceChange>> getDartFixes(
     ResolvedUnitResult resolvedUnitResult,
     AstNode astNode,
   ) async {
@@ -195,7 +195,7 @@ class PerferCandiesClassPrefix extends DartLint {
     final Token nameNode = (astNode as ClassDeclaration).name2;
     final String nameString = nameNode.toString();
     return <SourceChange>[
-      await getFix(
+      await getDartFix(
         resolvedUnitResult: resolvedUnitResult,
         message: 'Use Candies as a class prefix.',
         buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {
@@ -596,6 +596,8 @@ Prefer to use asset const instead of a string.
 class PreferAssetConst extends DartLint {
   @override
   String get code => 'prefer_asset_const';
+  @override
+  String? get url => 'https://pub.dev/packages/assets_generator';  
 }
 ```
 ### PreferNamedRoutes
@@ -606,6 +608,8 @@ Prefer to use named routes.
 class PreferNamedRoutes extends DartLint {
   @override
   String get code => 'prefer_named_routes';
+  @override
+  String? get url => 'https://pub.dev/packages/ff_annotation_route';  
 }
 ```
 
