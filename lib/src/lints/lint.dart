@@ -14,6 +14,8 @@ import 'package:candies_lints/src/extension.dart';
 import 'package:candies_lints/src/ignore_info.dart';
 import 'package:candies_lints/src/log.dart';
 
+import 'error.dart';
+
 /// The lint base
 abstract class CandyLint {
   /// The severity of the error.
@@ -57,7 +59,7 @@ abstract class CandyLint {
 
   Iterable<AnalysisError> toAnalysisErrors({
     required ResolvedUnitResult result,
-    required CandiesLintsIgnoreInfo ignore,
+    required CandiesLintsIgnoreInfo ignoreInfo,
   }) sync* {
     final Map<SyntacticEntity, AstNode> copy = <SyntacticEntity, AstNode>{};
     copy.addAll(_astNodes);
@@ -68,16 +70,22 @@ abstract class CandyLint {
       );
     }
     _astNodes.clear();
+    final List<CandyAnalysisError> errors = <CandyAnalysisError>[];
+    _cacheErrorsForFixes[result.path] = errors;
     for (final SyntacticEntity syntacticEntity in copy.keys) {
       final Location location = astNodeToLocation(
         result,
         syntacticEntity,
       );
-      if (!ignore.ignoredAt(code, location.startLine)) {
-        yield toAnalysisError(
+      if (!ignoreInfo.ignoredAt(code, location.startLine)) {
+        final CandyAnalysisError error = toAnalysisError(
           result: result,
           location: location,
+          astNode: copy[syntacticEntity]!,
+          ignoreInfo: ignoreInfo,
         );
+        errors.add(error);
+        yield error;
       } else {
         CandiesLintsLogger().log(
           'ignore code: $code at ${result.lineNumber(syntacticEntity.offset)} line in ${result.path}',
@@ -87,77 +95,53 @@ abstract class CandyLint {
     }
   }
 
-  Stream<AnalysisErrorFixes> toAnalysisErrorFixesStream({
-    required ResolvedUnitResult result,
-    required EditGetFixesParams parameters,
-    required CandiesLintsIgnoreInfo ignore,
-  }) async* {
-    final Map<SyntacticEntity, AstNode> copy = <SyntacticEntity, AstNode>{};
-    copy.addAll(_astNodes);
-    _astNodes.clear();
-    for (final SyntacticEntity syntacticEntity in copy.keys) {
-      if (syntacticEntity.offset <= parameters.offset &&
-          parameters.offset <= syntacticEntity.end) {
-        final Location location = astNodeToLocation(
-          result,
-          syntacticEntity,
-        );
-        if (!ignore.ignoredAt(code, location.startLine)) {
-          yield await toAnalysisErrorFixes(
-            result: result,
-            node: copy[syntacticEntity]!,
-            location: location,
-            ignore: ignore,
-          );
-        } else {
-          CandiesLintsLogger().log(
-            'ignore code: $code at ${result.lineNumber(syntacticEntity.offset)} line in ${parameters.file}',
-            root: result.root,
-          );
+  Stream<AnalysisErrorFixes> toAnalysisErrorFixesStream(
+      {required EditGetFixesParams parameters}) async* {
+    final List<CandyAnalysisError>? errors =
+        _cacheErrorsForFixes[parameters.file];
+    if (errors != null) {
+      for (final CandyAnalysisError error in errors) {
+        if (error.location.offset <= parameters.offset &&
+            parameters.offset <=
+                error.location.offset + error.location.length) {
+          yield await toAnalysisErrorFixes(error: error);
         }
       }
     }
   }
 
-  Future<AnalysisErrorFixes> toAnalysisErrorFixes({
-    required AstNode node,
-    required ResolvedUnitResult result,
-    required Location location,
-    required CandiesLintsIgnoreInfo ignore,
-  }) async {
+  Future<AnalysisErrorFixes> toAnalysisErrorFixes(
+      {required CandyAnalysisError error}) async {
     List<SourceChange> fixes = await getFixes(
-      result,
-      node,
+      error.result,
+      error.astNode,
     );
 
     fixes.add(
       await ignoreForThisLine(
-        resolvedUnitResult: result,
-        ignore: ignore,
+        resolvedUnitResult: error.result,
+        ignore: error.ignoreInfo,
         code: code,
-        location: location,
+        location: error.location,
       ),
     );
 
     fixes.add(
       await ignoreForThisFile(
-        resolvedUnitResult: result,
-        ignore: ignore,
+        resolvedUnitResult: error.result,
+        ignore: error.ignoreInfo,
       ),
     );
 
     fixes = fixes.reversed.toList();
 
     CandiesLintsLogger().log(
-      'get ${fixes.length} fixes for lint($code) at ${result.path}',
-      root: result.root,
+      'get ${fixes.length} fixes for lint($code) at ${error.result.path}',
+      root: error.result.root,
     );
 
     return AnalysisErrorFixes(
-      toAnalysisError(
-        result: result,
-        location: location,
-      ),
+      error,
       fixes: <PrioritizedSourceChange>[
         for (int i = 0; i < fixes.length; i++)
           PrioritizedSourceChange(i, fixes[i])
@@ -239,15 +223,17 @@ abstract class CandyLint {
   ) async =>
       <SourceChange>[];
 
-  AnalysisError toAnalysisError({
+  CandyAnalysisError toAnalysisError({
     required ResolvedUnitResult result,
     required Location location,
+    required AstNode astNode,
+    required CandiesLintsIgnoreInfo ignoreInfo,
   }) {
     CandiesLintsLogger().log(
       'find error: $code at ${location.startLine} line in ${result.path}',
       root: result.root,
     );
-    return AnalysisError(
+    return CandyAnalysisError(
       severity,
       type,
       location,
@@ -256,6 +242,9 @@ abstract class CandyLint {
       correction: correction,
       contextMessages: contextMessages,
       url: url,
+      astNode: astNode,
+      result: result,
+      ignoreInfo: ignoreInfo,
       //hasFix: hasFix,
     );
   }
@@ -276,6 +265,9 @@ abstract class CandyLint {
   }
 
   final Map<SyntacticEntity, AstNode> _astNodes = <SyntacticEntity, AstNode>{};
+
+  final Map<String, List<CandyAnalysisError>> _cacheErrorsForFixes =
+      <String, List<CandyAnalysisError>>{};
 
   bool analyze(AstNode node) {
     if (!_astNodes.containsKey(node) &&

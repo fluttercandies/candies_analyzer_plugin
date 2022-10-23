@@ -178,24 +178,18 @@ class CandiesLintsPlugin extends ServerPlugin {
     }
 
     try {
-      final ResolvedUnitResult unitResult = await getResolvedUnitResult(path);
-      CandiesLintsLogger()
-          .log('start get fixes for $path', root: unitResult.root);
+      //final ResolvedUnitResult unitResult = await getResolvedUnitResult(path);
+      // CandiesLintsLogger()
+      //     .log('start get fixes for $path', root: unitResult.root);
       // can't get candies error from ResolvedUnitResult.errors
       // so we can't use FixesMixin
       // CandiesLintsLogger().log(
       //     'has ${unitResult.errors.map((e) => e.errorCode)} errors for $path',
       //     root: unitResult.root);
-      unitResult.unit.visitChildren(astVisitor);
+      //unitResult.unit.visitChildren(astVisitor);
 
-      final CandiesLintsIgnoreInfo ignore =
-          CandiesLintsIgnoreInfo.forDart(unitResult);
       final List<AnalysisErrorFixes> fixes = await astVisitor
-          .getAnalysisErrorFixes(
-            result: unitResult,
-            parameters: parameters,
-            ignore: ignore,
-          )
+          .getAnalysisErrorFixes(parameters: parameters)
           .toList();
       return EditGetFixesResult(fixes);
     } on Exception catch (e, stackTrace) {
@@ -232,22 +226,16 @@ mixin AstVisitorBase on AstVisitor<void> {
     for (final CandyLint lint in lints) {
       yield* lint.toAnalysisErrors(
         result: result,
-        ignore: ignore,
+        ignoreInfo: ignore,
       );
     }
   }
 
   Stream<AnalysisErrorFixes> getAnalysisErrorFixes({
-    required ResolvedUnitResult result,
     required EditGetFixesParams parameters,
-    required CandiesLintsIgnoreInfo ignore,
   }) async* {
     for (final CandyLint lint in lints) {
-      yield* lint.toAnalysisErrorFixesStream(
-        result: result,
-        parameters: parameters,
-        ignore: ignore,
-      );
+      yield* lint.toAnalysisErrorFixesStream(parameters: parameters);
     }
   }
 }
