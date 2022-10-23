@@ -8,7 +8,15 @@ void main(List<String> args) {
   if (args.isEmpty) {
     print('please run as \'candies_lints plugin_name\'');
   }
-  final String pluginName = args.first;
+
+  final String arg = args.first;
+
+  if (arg == 'clear_cache') {
+    clearPluginManagerCache();
+    return;
+  }
+
+  final String pluginName = arg;
   final Directory currentD = Directory.current;
   processRun(executable: 'dart', arguments: 'create $pluginName -t package');
 
@@ -54,6 +62,37 @@ void main(List<String> args) {
     arguments: 'pub get',
     workingDirectory: analyzerPluginPath,
   );
+}
+
+void clearPluginManagerCache() {
+  String? home;
+  final Map<String, String> envVars = Platform.environment;
+  if (Platform.isMacOS) {
+    home = envVars['HOME'];
+  } else if (Platform.isLinux) {
+    home = envVars['HOME'];
+  } else if (Platform.isWindows) {
+    home = envVars['UserProfile'];
+  }
+
+  if (home != null) {
+    Directory? directory;
+    // macos:  `/Users/user_name/.dartServer/.plugin_manager/`
+    // windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
+    if (Platform.isMacOS) {
+      directory = Directory(path.join(home, '.dartServer', '.plugin_manager'));
+    } else if (Platform.isLinux) {
+      directory = Directory(path.join(home, '.dartServer', '.plugin_manager'));
+    } else if (Platform.isWindows) {
+      directory = Directory(path.join(
+          home, 'AppData', 'Local', '.dartServer', '.plugin_manager'));
+    }
+
+    if (directory != null && directory.existsSync()) {
+      print(green.wrap('clear plugin_manager cache successfully!'));
+      directory.deleteSync(recursive: true);
+    }
+  }
 }
 
 const String pluginDemo = '''

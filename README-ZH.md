@@ -415,7 +415,7 @@ Future<void> main(List<String> args) async {
 
 1. 删除 .plugin_manager 文件夹
 
-Note, `analyzer_plugin` 文件夹下面的东西都会被复制到 `.plugin_manager` 下面, 它是有缓存的.
+注意, `analyzer_plugin` 文件夹下面的东西会复制到 `.plugin_manager` 下面，根据插件的路径加密生成对应的文件夹。
 
 macos:  `/Users/user_name/.dartServer/.plugin_manager/`
 
@@ -423,8 +423,10 @@ windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
 
 如果你的代码改变了, 请删除掉 `.plugin_manager` 下面的文件
 
+或者通过执行 `candies_lints clear_cache` 来删除 `.plugin_manager` 下面的文件. 
 
-2. 把新的代码写到 custom_lint 下面
+
+1. 把新的代码写到 custom_lint 下面
 
 你可以把新代码写到 custom_lint 下面, 比如在 custom_lint.dart. 
 

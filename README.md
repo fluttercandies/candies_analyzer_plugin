@@ -414,7 +414,7 @@ you have two options to update new code into dartServer.
 
 1. delete .plugin_manager folder
 
-Note, `analyzer_plugin` folder will be copy into following, and it has cache.
+Note, `analyzer_plugin` folder will be copyed into `.plugin_manager` and create a folder base on encrypt plugin path.
 
 macos:  `/Users/user_name/.dartServer/.plugin_manager/`
 
@@ -422,8 +422,10 @@ windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
 
 if your code is changed, please remove the files under `.plugin_manager`.
 
+or you can run `candies_lints clear_cache` to remove the files under `.plugin_manager`. 
 
-2. write new code under custom_lint folder
+
+1. write new code under custom_lint folder
 
 you can write new code under custom_lint, for exmaple, in custom_lint.dart. 
 

@@ -1,3 +1,7 @@
+## 2.0.1
+
+* add command `clear_cache` to clear plugin_manager cache.
+
 ## 2.0.0
 
 * refactor code to support dart, yaml, generic file lint.
