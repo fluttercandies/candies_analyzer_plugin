@@ -1,10 +1,10 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 
-import 'lint.dart';
+import 'dart_lint.dart';
 
 /// The 'prefer_asset_const' lint
-class PreferAssetConst extends CandyLint {
+class PreferAssetConst extends DartLint {
   @override
   String get code => 'prefer_asset_const';
 

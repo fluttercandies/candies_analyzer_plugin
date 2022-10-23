@@ -5,10 +5,10 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_lints/src/extension.dart';
 
-import 'lint.dart';
+import 'dart_lint.dart';
 
 /// The 'prefer_safe_setState' lint
-class PerferSafeSetState extends CandyLint {
+class PerferSafeSetState extends DartLint {
   @override
   String get code => 'prefer_safe_setState';
 
@@ -22,14 +22,14 @@ class PerferSafeSetState extends CandyLint {
   String? get url => 'https://github.com/fluttercandies/candies_lints';
 
   @override
-  Future<List<SourceChange>> getFixes(
+  Future<List<SourceChange>> getDartFixes(
     ResolvedUnitResult resolvedUnitResult,
     AstNode astNode,
   ) async {
     return <SourceChange>[
       if (astNode.toString().endsWith(';') ||
           (astNode.parent != null && astNode.parent!.toString().endsWith(';')))
-        await getFix(
+        await getDartFix(
           resolvedUnitResult: resolvedUnitResult,
           message: 'Add if(mounted){} for setState',
           buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {

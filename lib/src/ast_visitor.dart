@@ -13,12 +13,12 @@ class CandiesLintsAstVisitor extends GeneralizingAstVisitor<void>
 /// AstVisitor to check lint
 ///
 mixin AstVisitorBase on AstVisitor<void> {
-  List<CandyLint>? _lints;
-  List<CandyLint> get lints => _lints ??= <CandyLint>[];
+  List<DartLint>? _lints;
+  List<DartLint> get lints => _lints ??= <DartLint>[];
 
   bool analyze(AstNode node) {
     bool handle = false;
-    for (final CandyLint lint in lints) {
+    for (final DartLint lint in lints) {
       handle = lint.analyze(node) || handle;
     }
     return handle;
@@ -29,8 +29,8 @@ mixin AstVisitorBase on AstVisitor<void> {
     required CandiesLintsIgnoreInfo ignore,
     required CandiesLintsConfig? config,
   }) sync* {
-    for (final CandyLint lint in lints) {
-      yield* lint.toAnalysisErrors(
+    for (final DartLint lint in lints) {
+      yield* lint.toDartAnalysisErrors(
         result: result,
         ignoreInfo: ignore,
         config: config,
@@ -41,14 +41,14 @@ mixin AstVisitorBase on AstVisitor<void> {
   Stream<AnalysisErrorFixes> getAnalysisErrorFixes({
     required EditGetFixesParams parameters,
   }) async* {
-    for (final CandyLint lint in lints) {
-      yield* lint.toAnalysisErrorFixesStream(parameters: parameters);
+    for (final DartLint lint in lints) {
+      yield* lint.toDartAnalysisErrorFixesStream(parameters: parameters);
     }
   }
 
-  Iterable<CandyAnalysisError> clearCacheErrors(String path) sync* {
-    for (final CandyLint lint in lints) {
-      final List<CandyAnalysisError>? list = lint.clearCacheErrors(path);
+  Iterable<DartAnalysisError> clearCacheErrors(String path) sync* {
+    for (final DartLint lint in lints) {
+      final List<DartAnalysisError>? list = lint.clearCacheErrors(path);
       if (list != null) {
         yield* list;
       }

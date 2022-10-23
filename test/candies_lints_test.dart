@@ -10,9 +10,11 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer/src/ignore_comments/ignore_info.dart';
+import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:candies_lints/src/ignore_info.dart';
-import 'package:candies_lints/src/plugin.dart';
+
 import 'package:analyzer/src/util/glob.dart';
+import 'package:candies_lints/src/plugin/plugin.dart';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
@@ -31,11 +33,20 @@ Future<void> main() async {
         if (!myPlugin.shouldAnalyzeFile(file)) {
           continue;
         }
-        final List<AnalysisError> errors = myPlugin.getErrorsFromResultForDebug(
-          await context.currentSession.getResolvedUnit(file)
-              as ResolvedUnitResult,
+        final List<AnalysisError> errors =
+            (await myPlugin.getAnalysisErrorsForDebug(
+          file,
           context,
-        );
+        ))
+                .toList();
+        for (final AnalysisError error in errors) {
+          final List<AnalysisErrorFixes> fixes = await myPlugin
+              .getAnalysisErrorFixesForDebug(
+                  EditGetFixesParams(file, error.location.offset), context)
+              .toList();
+          print(fixes.length);
+        }
+
         print(errors.length);
       }
     }

@@ -6,10 +6,10 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_lints/src/extension.dart';
-import 'lint.dart';
+import 'dart_lint.dart';
 
 /// The 'perfer_class_prefix' lint
-class PerferClassPrefix extends CandyLint {
+class PerferClassPrefix extends DartLint {
   PerferClassPrefix(this.prefix);
 
   final String prefix;
@@ -36,7 +36,7 @@ class PerferClassPrefix extends CandyLint {
   String get message => 'Define a class name start with $prefix';
 
   @override
-  Future<List<SourceChange>> getFixes(
+  Future<List<SourceChange>> getDartFixes(
     ResolvedUnitResult resolvedUnitResult,
     AstNode astNode,
   ) async {
@@ -44,7 +44,7 @@ class PerferClassPrefix extends CandyLint {
     final Token nameNode = (astNode as ClassDeclaration).name2;
     final String nameString = nameNode.toString();
     return <SourceChange>[
-      await getFix(
+      await getDartFix(
         resolvedUnitResult: resolvedUnitResult,
         message: 'Use $prefix as a class prefix.',
         buildDartFileEdit: (DartFileEditBuilder dartFileEditBuilder) {

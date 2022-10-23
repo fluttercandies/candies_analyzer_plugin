@@ -20,42 +20,28 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:analyzer_plugin/utilities/completion/completion_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
+import 'package:candies_lints/candies_lints.dart';
 //import 'package:analyzer_plugin/src/utilities/fixes/fixes.dart';
-import 'package:candies_lints/src/extension.dart';
-import 'package:candies_lints/src/ignore_info.dart';
-import 'package:candies_lints/src/lints/error.dart';
+import 'package:candies_lints/src/error/dart.dart';
+import 'package:candies_lints/src/lints/generic_lint.dart';
 import 'package:candies_lints/src/lints/lint.dart';
-import 'package:candies_lints/src/lints/prefer_asset_const.dart';
-import 'package:candies_lints/src/lints/prefer_named_routes.dart';
-import 'package:candies_lints/src/lints/prefer_safe_set_state.dart';
 import 'package:analyzer/error/error.dart' as error;
-import 'package:candies_lints/src/config.dart';
+import 'package:path/path.dart' as path_package;
 
-import 'log.dart';
+part 'dart_mixin.dart';
+part 'yaml_mixin.dart';
+part 'generic_mixin.dart';
 
-class CandiesLintsPlugin extends ServerPlugin {
+class CandiesLintsPlugin extends ServerPlugin
+    with DartFilePlugin, YamlFilePlugin, GenericFilePlugin {
   CandiesLintsPlugin()
       : super(resourceProvider: PhysicalResourceProvider.INSTANCE) {
     CandiesLintsLogger().logFileName = logFileName;
   }
 
-  /// AstVisitor to check lint
-  AstVisitorBase get astVisitor => CandiesLintsAstVisitor();
-
-  /// The lints to be used to analyze files
-  List<CandyLint> get lints => <CandyLint>[
-        PreferAssetConst(),
-        PreferNamedRoutes(),
-        PerferSafeSetState(),
-      ];
-
   /// The name of log file
   /// default this.name
   String get logFileName => name;
-
-  /// The cache of configs
-  final Map<String, CandiesLintsConfig> _configs =
-      <String, CandiesLintsConfig>{};
 
   /// Return the user visible name of this plugin.
   @override
@@ -77,6 +63,10 @@ class CandiesLintsPlugin extends ServerPlugin {
   String get contactInfo => 'https://github.com/fluttercandies/candies_lints';
 
   late AnalysisContextCollection _contextCollection;
+
+  /// The cache of configs
+  final Map<String, CandiesLintsConfig> _configs =
+      <String, CandiesLintsConfig>{};
 
   /// whether should analyze this file
   bool shouldAnalyzeFile(String path) {
@@ -111,7 +101,7 @@ class CandiesLintsPlugin extends ServerPlugin {
   @override
   Future<void> analyzeFile(
       {required AnalysisContext analysisContext, required String path}) async {
-    if (lints.isEmpty || !shouldAnalyzeFile(path)) {
+    if (dartLints.isEmpty || !shouldAnalyzeFile(path)) {
       return;
     }
 
@@ -122,17 +112,11 @@ class CandiesLintsPlugin extends ServerPlugin {
 
     final CandiesLintsConfig? config = _configs[analysisContext.root];
     if (config == null || !config.shouldAnalyze || !config.include(path)) {
-      if (config != null) {
-        final List<CandyAnalysisError> clearErrors =
-            config.astVisitor.clearCacheErrors(path).toList();
-        if (clearErrors.isNotEmpty) {
-          // send a notification that we ignore the errors in this file.
-          channel.sendNotification(
-            AnalysisErrorsParams(path, <AnalysisError>[]).toNotification(),
-          );
-        }
-      }
-
+      config?.clearCacheErrors(path);
+      // send a notification that we ignore the errors in this file.
+      channel.sendNotification(
+        AnalysisErrorsParams(path, <AnalysisError>[]).toNotification(),
+      );
       return;
     }
 
@@ -142,12 +126,11 @@ class CandiesLintsPlugin extends ServerPlugin {
         root: analysisContext.root,
       );
 
-      final ResolvedUnitResult unitResult = await getResolvedUnitResult(path);
       final List<AnalysisError> errors =
-          getErrorsFromResult(unitResult, config);
+          (await getAnalysisErrors(config, path, analysisContext)).toList();
 
       CandiesLintsLogger().log(
-        'find ${errors.length} errors in ${unitResult.path}',
+        'find ${errors.length} errors in $path',
         root: analysisContext.root,
       );
       // if errors is empty, we still need to send a notification
@@ -169,38 +152,45 @@ class CandiesLintsPlugin extends ServerPlugin {
     }
   }
 
-  /// Return AnalysisError List base on ResolvedUnitResult.
-  List<AnalysisError> getErrorsFromResult(
-    ResolvedUnitResult unitResult,
+  Future<Iterable<AnalysisError>> getAnalysisErrors(
     CandiesLintsConfig config,
-  ) {
-    unitResult.unit.visitChildren(config.astVisitor);
-    final CandiesLintsIgnoreInfo ignore =
-        CandiesLintsIgnoreInfo.forDart(unitResult);
-    final List<AnalysisError> errors = config.astVisitor
-        .getAnalysisErrors(
-          result: unitResult,
-          ignore: ignore,
-          config: config,
-        )
-        .toList();
-    return errors;
+    String path,
+    AnalysisContext analysisContext,
+  ) async {
+    if (config.isDartFile(path)) {
+      return await analyzeDartFile(
+        analysisContext: analysisContext,
+        path: path,
+        config: config,
+      );
+    } else if (config.isYamlFile(path)) {
+      return analyzeYamlFile(
+        analysisContext: analysisContext,
+        path: path,
+        config: config,
+      );
+    } else {
+      return analyzeGenericFile(
+        analysisContext: analysisContext,
+        path: path,
+        config: config,
+      );
+    }
   }
 
-  /// Return AnalysisError List base on ResolvedUnitResult.
-  ///
-  List<AnalysisError> getErrorsFromResultForDebug(
-    ResolvedUnitResult unitResult,
-    AnalysisContext context,
+  Future<Iterable<AnalysisError>> getAnalysisErrorsForDebug(
+    String path,
+    AnalysisContext analysisContext,
   ) {
     final CandiesLintsConfig config =
-        _configs[context.root] ??= CandiesLintsConfig(
-      context: context,
+        _configs[analysisContext.root] ??= CandiesLintsConfig(
+      context: analysisContext,
       pluginName: name,
-      lints: lints,
+      dartLints: dartLints,
       astVisitor: astVisitor,
+      yamlLints: yamlLints,
     );
-    return getErrorsFromResult(unitResult, config);
+    return getAnalysisErrors(config, path, analysisContext);
   }
 
   /// Handle an 'edit.getFixes' request.
@@ -210,7 +200,8 @@ class CandiesLintsPlugin extends ServerPlugin {
   Future<EditGetFixesResult> handleEditGetFixes(
       EditGetFixesParams parameters) async {
     final String path = parameters.file;
-    if (!shouldAnalyzeFile(path) || lints.isEmpty) {
+
+    if (!shouldAnalyzeFile(path) || dartLints.isEmpty) {
       return EditGetFixesResult(const <AnalysisErrorFixes>[]);
     }
 
@@ -228,6 +219,10 @@ class CandiesLintsPlugin extends ServerPlugin {
 
       final CandiesLintsConfig? config = _configs[root];
       if (config == null || !config.shouldAnalyze || !config.include(path)) {
+        CandiesLintsLogger().log(
+          'skip get fixes for $path',
+          root: root,
+        );
         return EditGetFixesResult(const <AnalysisErrorFixes>[]);
       }
 
@@ -236,14 +231,13 @@ class CandiesLintsPlugin extends ServerPlugin {
         root: root,
       );
 
-      final List<AnalysisErrorFixes> fixes = await config.astVisitor
-          .getAnalysisErrorFixes(parameters: parameters)
-          .toList();
+      final List<AnalysisErrorFixes> fixes =
+          await getAnalysisErrorFixes(config, parameters, context).toList();
+
       CandiesLintsLogger().log(
-        'get ${fixes.length} fixes for $path',
+        'get total ${fixes.length} fixes for $path',
         root: root,
       );
-
       return EditGetFixesResult(fixes);
     } on Exception catch (e, stackTrace) {
       // CandiesLintsLogger()
@@ -257,6 +251,36 @@ class CandiesLintsPlugin extends ServerPlugin {
     return EditGetFixesResult(const <AnalysisErrorFixes>[]);
   }
 
+  Stream<AnalysisErrorFixes> getAnalysisErrorFixes(
+    CandiesLintsConfig config,
+    EditGetFixesParams parameters,
+    AnalysisContext context,
+  ) {
+    return config.getAnalysisErrorFixes(
+      parameters: parameters,
+      analysisContext: context,
+    );
+  }
+
+  Stream<AnalysisErrorFixes> getAnalysisErrorFixesForDebug(
+    EditGetFixesParams parameters,
+    AnalysisContext analysisContext,
+  ) {
+    final CandiesLintsConfig config =
+        _configs[analysisContext.root] ??= CandiesLintsConfig(
+      context: analysisContext,
+      pluginName: name,
+      dartLints: dartLints,
+      astVisitor: astVisitor,
+      yamlLints: yamlLints,
+    );
+    return getAnalysisErrorFixes(
+      config,
+      parameters,
+      analysisContext,
+    );
+  }
+
   /// This method is invoked when a new instance of [AnalysisContextCollection]
   /// is created, so the plugin can perform initial analysis of analyzed files.
   ///
@@ -267,15 +291,20 @@ class CandiesLintsPlugin extends ServerPlugin {
   }) async {
     _contextCollection = contextCollection;
     for (final AnalysisContext analysisContext in contextCollection.contexts) {
-      CandiesLintsLogger().log(
-          'create a new config for ${analysisContext.root}',
-          root: analysisContext.root);
-      _configs[analysisContext.root] = CandiesLintsConfig(
+      final CandiesLintsConfig config = CandiesLintsConfig(
         context: analysisContext,
         pluginName: name,
-        lints: lints,
+        dartLints: dartLints,
         astVisitor: astVisitor,
+        yamlLints: yamlLints,
       );
+      if (config.shouldAnalyze) {
+        _configs[analysisContext.root] = config;
+        CandiesLintsLogger().log(
+          'create a new config for ${analysisContext.root}',
+          root: analysisContext.root,
+        );
+      }
     }
     await super.afterNewContextCollection(contextCollection: contextCollection);
   }

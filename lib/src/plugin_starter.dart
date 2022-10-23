@@ -1,6 +1,6 @@
 import 'dart:isolate';
 import 'package:analyzer_plugin/starter.dart';
-import 'plugin.dart';
+import 'package:candies_lints/src/plugin/plugin.dart';
 
 /// An object that can be used to start an analysis server plugin. This class
 /// exists so that clients can configure a plugin before starting it.

@@ -4,8 +4,8 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:candies_lints/src/ignore_info.dart';
 
 /// The cache error for get fixes
-class CandyAnalysisError extends AnalysisError {
-  CandyAnalysisError(
+class DartAnalysisError extends AnalysisError {
+  DartAnalysisError(
     super.severity,
     super.type,
     super.location,
