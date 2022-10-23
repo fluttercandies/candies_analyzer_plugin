@@ -27,7 +27,7 @@ import 'package:candies_lints/src/lints/error.dart';
 import 'package:candies_lints/src/lints/lint.dart';
 import 'package:candies_lints/src/lints/prefer_asset_const.dart';
 import 'package:candies_lints/src/lints/prefer_named_routes.dart';
-import 'package:candies_lints/src/lints/prefer_safe_setstate.dart';
+import 'package:candies_lints/src/lints/prefer_safe_set_state.dart';
 import 'package:analyzer/error/error.dart' as error;
 import 'package:candies_lints/src/config.dart';
 
