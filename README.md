@@ -25,6 +25,7 @@ The plugin to help create custom lint quickly.
   - [Config](#config)
     - [disable a lint](#disable-a-lint)
     - [include](#include)
+    - [exclude](#exclude)
     - [custom lint severity](#custom-lint-severity)
   - [Default lints](#default-lints)
     - [PerferClassPrefix](#perferclassprefix)
@@ -554,6 +555,19 @@ custom_lint:
   # if we define this, we only analyze include files
   include: 
     - lib/include/*.dart
+```
+
+### exclude
+
+we can define `exclude` tag under `custom_lint` (it's your plugin name).
+this means that we will no longer analyze excluded files.
+
+``` yaml
+
+# your plugin name
+custom_lint:
+  exclude: 
+    - lib/exclude/*.dart
 ```
 
 ### custom lint severity

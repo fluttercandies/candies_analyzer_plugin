@@ -134,7 +134,7 @@ class CandiesLintsPlugin extends ServerPlugin
     }
 
     final CandiesLintsConfig? config = _configs[analysisContext.root];
-    if (config == null || !config.shouldAnalyze || !config.include(path)) {
+    if (config == null || !config.shouldAnalyze || !config.isAnalyzed(path)) {
       config?.clearCacheErrors(path);
       // send a notification that we ignore the errors in this file.
       channel.sendNotification(
@@ -242,7 +242,7 @@ class CandiesLintsPlugin extends ServerPlugin
       final String root = context.root;
 
       final CandiesLintsConfig? config = _configs[root];
-      if (config == null || !config.shouldAnalyze || !config.include(path)) {
+      if (config == null || !config.shouldAnalyze || !config.isAnalyzed(path)) {
         CandiesLintsLogger().log(
           'skip get fixes for $path',
           root: root,

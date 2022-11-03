@@ -25,6 +25,7 @@
   - [配置](#配置)
     - [禁止一个 lint](#禁止一个-lint)
     - [包含文件](#包含文件)
+    - [排除文件](#排除文件)
     - [自定义 lint 严肃性](#自定义-lint-严肃性)
   - [Default lints](#default-lints)
     - [PerferClassPrefix](#perferclassprefix)
@@ -555,6 +556,19 @@ custom_lint:
   # if we define this, we only analyze include files
   include: 
     - lib/include/*.dart
+```
+
+### 排除文件
+
+也可以通过在 `custom_lint`(你定义的插件名字) 下面的 `exclude` 标记下面增加排除的文件。
+这样便不会去分析所排除的文件。
+
+``` yaml
+
+# your plugin name
+custom_lint:
+  exclude: 
+    - lib/exclude/*.dart
 ```
 
 ### 自定义 lint 严肃性

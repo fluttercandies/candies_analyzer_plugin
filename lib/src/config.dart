@@ -88,13 +88,15 @@ class CandiesLintsConfig {
         }
         if (yaml.nodes[pluginName] is YamlMap) {
           final YamlMap pluginConfig = yaml.nodes[pluginName] as YamlMap;
-          if (pluginConfig.nodes['include'] is YamlList) {
-            final YamlList includePatterns =
-                pluginConfig.nodes['include'] as YamlList;
-            _includePatterns.addAll(includePatterns
-                .map((dynamic e) => Glob(path_context.separator, e.toString()))
-                .toList());
+          void fillPatternList(String node, List<Glob> patternList) {
+            if (pluginConfig.nodes[node] is YamlList) {
+              patternList.addAll((pluginConfig.nodes[node] as YamlList).map(
+                  (dynamic e) => Glob(path_context.separator, e.toString())));
+            }
           }
+
+          fillPatternList('include', _includePatterns);
+          fillPatternList('exclude', _excludePatterns);
         }
       }
 
@@ -115,6 +117,7 @@ class CandiesLintsConfig {
   final String pluginName;
   final AstVisitorBase astVisitor;
   final List<Glob> _includePatterns = <Glob>[];
+  final List<Glob> _excludePatterns = <Glob>[];
   final List<YamlLint> yamlLints;
   final List<GenericLint> genericLints;
   bool _shouldAnalyze = false;
@@ -140,21 +143,18 @@ class CandiesLintsConfig {
     return lint.severity;
   }
 
-  bool include(String input) {
-    if (_includePatterns.isEmpty) {
-      return true;
-    }
-
+  bool isAnalyzed(String path) {
     final String relative =
-        path_context.relative(input, from: context.contextRoot.root.path);
-
-    for (final Glob includePattern in _includePatterns) {
-      if (includePattern.matches(relative)) {
-        return true;
-      }
-    }
-    return false;
+        path_context.relative(path, from: context.contextRoot.root.path);
+    return _include(relative) && !_exclude(relative);
   }
+
+  bool _include(String path) =>
+      _includePatterns.isEmpty ||
+      _includePatterns.any((Glob pattern) => pattern.matches(path));
+
+  bool _exclude(String path) =>
+      _excludePatterns.any((Glob pattern) => pattern.matches(path));
 
   bool isDartFile(String file) => file_paths.isDart(path_context.context, file);
 
