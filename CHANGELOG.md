@@ -1,3 +1,7 @@
+## 2.0.3
+
+* remove dartLints.isEmpty in analyzeFile and handleEditGetFixes methods.
+  
 ## 2.0.2
 
 * add `must_call_super_dispose` and `end_call_super_dispose` lints.

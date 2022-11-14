@@ -124,7 +124,7 @@ class CandiesLintsPlugin extends ServerPlugin
   @override
   Future<void> analyzeFile(
       {required AnalysisContext analysisContext, required String path}) async {
-    if (dartLints.isEmpty || !shouldAnalyzeFile(path, analysisContext)) {
+    if (!shouldAnalyzeFile(path, analysisContext)) {
       return;
     }
 
@@ -225,7 +225,7 @@ class CandiesLintsPlugin extends ServerPlugin
       EditGetFixesParams parameters) async {
     final String path = parameters.file;
     final AnalysisContext context = _contextCollection.contextFor(path);
-    if (!shouldAnalyzeFile(path, context) || dartLints.isEmpty) {
+    if (!shouldAnalyzeFile(path, context)) {
       return EditGetFixesResult(const <AnalysisErrorFixes>[]);
     }
 
