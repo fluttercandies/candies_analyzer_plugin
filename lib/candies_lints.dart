@@ -7,6 +7,7 @@ export 'src/plugin_starter.dart';
 export 'src/plugin/plugin.dart';
 export 'src/lints/lint.dart';
 export 'src/lints/yaml_lint.dart';
+export 'src/lints/dart/call_super_dispose.dart';
 export 'src/lints/dart/dart_lint.dart';
 export 'src/lints/dart/perfer_class_prefix.dart';
 export 'src/lints/dart/prefer_asset_const.dart';

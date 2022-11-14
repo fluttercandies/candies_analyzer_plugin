@@ -31,6 +31,8 @@ The plugin to help create custom lint quickly.
     - [PreferAssetConst](#preferassetconst)
     - [PreferNamedRoutes](#prefernamedroutes)
     - [PerferSafeSetState](#perfersafesetstate)
+    - [MustCallSuperDispose](#mustcallsuperdispose)
+    - [EndCallSuperDispose](#endcallsuperdispose)
   - [Note](#note)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
@@ -623,7 +625,27 @@ class PerferSafeSetState extends DartLint {
   String get code => 'prefer_safe_setState';
 }
 ```
+### MustCallSuperDispose
 
+Implementations of this method should end with a call to the inherited method, as in `super.dispose()`.
+
+``` dart
+class MustCallSuperDispose extends DartLint with CallSuperDisposeMixin {
+  @override
+  String get code => 'must_call_super_dispose';
+}
+```
+
+### EndCallSuperDispose
+
+Should call `super.dispose()` at the end of this method.
+
+``` dart
+class EndCallSuperDispose extends DartLint with CallSuperDisposeMixin {
+  @override
+  String get code => 'end_call_super_dispose';
+}
+```
 
 ## Note 
 ### print lag

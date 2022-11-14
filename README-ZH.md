@@ -31,6 +31,8 @@
     - [PreferAssetConst](#preferassetconst)
     - [PreferNamedRoutes](#prefernamedroutes)
     - [PerferSafeSetState](#perfersafesetstate)
+    - [MustCallSuperDispose](#mustcallsuperdispose)
+    - [EndCallSuperDispose](#endcallsuperdispose)
   - [注意事项](#注意事项)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
@@ -625,6 +627,27 @@ class PerferSafeSetState extends DartLint {
 }
 ```
 
+### MustCallSuperDispose
+
+此方法的实现应以调用继承的方法结束
+
+``` dart
+class MustCallSuperDispose extends DartLint with CallSuperDisposeMixin {
+  @override
+  String get code => 'must_call_super_dispose';
+}
+```
+
+### EndCallSuperDispose
+
+应该在方法的最后才调用 `super.dispose()` 
+
+``` dart
+class EndCallSuperDispose extends DartLint with CallSuperDisposeMixin {
+  @override
+  String get code => 'end_call_super_dispose';
+}
+```
 
 ## 注意事项 
 ### print lag

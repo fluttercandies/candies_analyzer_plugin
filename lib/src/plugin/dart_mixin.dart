@@ -9,6 +9,8 @@ mixin DartFilePlugin on ServerPlugin {
         PreferAssetConst(),
         PreferNamedRoutes(),
         PerferSafeSetState(),
+        MustCallSuperDispose(),
+        EndCallSuperDispose(),
       ];
 
   Future<Iterable<AnalysisError>> analyzeDartFile({

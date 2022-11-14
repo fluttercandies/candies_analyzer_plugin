@@ -63,6 +63,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void dispose() {
+    //super.dispose();
+    super.dispose();
+    int i = 1;
+  }
+
+  //@override
+  //void dispose() => _counter++;
+  //@override
+  //void dispose() => super.dispose();
+  //@override
+  //void dispose() => {};
+
+  @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.

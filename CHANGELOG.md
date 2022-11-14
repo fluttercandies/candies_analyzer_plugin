@@ -1,3 +1,7 @@
+## 2.0.2
+
+* add `must_call_super_dispose` and `end_call_super_dispose` lints.
+
 ## 2.0.1
 
 * add command `clear_cache` to clear plugin_manager cache.
