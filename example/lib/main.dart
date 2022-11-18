@@ -1,7 +1,19 @@
 // ignore_for_file: unused_local_variable
+
+//import 'package:dartx/dartx.dart';
+//import 'package:example/extension/int.dart';
+
 import 'package:flutter/material.dart';
+//import 'dart:async';
+
+// import 'package:time/time.dart';
+// import 'package:dartx/dartx.dart';
 
 void main() {
+  int i = 1;
+
+  List<int> list = <int>[];
+
   runApp(const MyApp());
 }
 

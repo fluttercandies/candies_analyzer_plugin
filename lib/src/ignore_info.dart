@@ -9,8 +9,8 @@ import 'package:analyzer/src/ignore_comments/ignore_info.dart';
 import 'extension.dart';
 
 /// The class to help ignore error
-class CandiesLintsIgnoreInfo {
-  CandiesLintsIgnoreInfo.forDart(this.result) {
+class CandiesAnalyzerPluginIgnoreInfo {
+  CandiesAnalyzerPluginIgnoreInfo.forDart(this.result) {
     final String content = result.content;
     final LineInfo lineInfo = result.lineInfo;
     //final IgnoreInfo info = IgnoreInfo.forDart(result.unit, result.content);

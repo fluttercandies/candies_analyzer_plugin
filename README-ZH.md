@@ -1,6 +1,6 @@
-# candies_lints
+# candies_analyzer_plugin
 
-[![pub package](https://img.shields.io/pub/v/candies_lints.svg)](https://pub.dartlang.org/packages/candies_lints) [![GitHub stars](https://img.shields.io/github/stars/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/stargazers) [![GitHub forks](https://img.shields.io/github/forks/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/network) [![GitHub license](https://img.shields.io/github/license/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/issues) <a target="_blank" href="https://jq.qq.com/?_wv=1027&k=5bcc0gy"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="flutter-candies" title="flutter-candies"></a>
+[![pub package](https://img.shields.io/pub/v/candies_analyzer_plugin.svg)](https://pub.dartlang.org/packages/candies_analyzer_plugin) [![GitHub stars](https://img.shields.io/github/stars/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/stargazers) [![GitHub forks](https://img.shields.io/github/forks/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/network) [![GitHub license](https://img.shields.io/github/license/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/issues) <a target="_blank" href="https://jq.qq.com/?_wv=1027&k=5bcc0gy"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="flutter-candies" title="flutter-candies"></a>
 
 语言: [English](README.md) | 中文简体
 
@@ -8,7 +8,7 @@
 
 帮助快速创建自定义 lint 的插件.
 
-- [candies_lints](#candies_lints)
+- [candies_analyzer_plugin](#candies_analyzer_plugin)
   - [描述](#描述)
   - [模版创建](#模版创建)
   - [增添你的 lint](#增添你的-lint)
@@ -33,12 +33,16 @@
     - [PerferSafeSetState](#perfersafesetstate)
     - [MustCallSuperDispose](#mustcallsuperdispose)
     - [EndCallSuperDispose](#endcallsuperdispose)
+  - [Completion](#completion)
+    - [Make a custom completion](#make-a-custom-completion)
+    - [扩展方法提示](#扩展方法提示)
   - [注意事项](#注意事项)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
-    - [快速修复只支持 dart 文件.](#快速修复只支持-dart-文件)
+    - [在 vscode 中快速修复只支持 dart 文件.(android studio支持任何文件)](#在-vscode-中快速修复只支持-dart-文件android-studio支持任何文件)
+    - [提示自动导入在 vscode 无法完成](#提示自动导入在-vscode-无法完成)
 
-* [example](https://github.com/fluttercandies/candies_lints/example)
+* [example](https://github.com/fluttercandies/candies_analyzer_plugin/example)
 
 * [analyzer_plugin 文档](https://github.com/dart-lang/sdk/blob/master/pkg/analyzer_plugin/doc/tutorial/tutorial.md)
   
@@ -46,7 +50,7 @@
 
 1. 激活插件
 
-   执行命令 `dart pub global activate candies_lints`
+   执行命令 `dart pub global activate candies_analyzer_plugin`
 
 
 2. 到你的项目的根目录
@@ -57,7 +61,7 @@
    
    你想创建的插件叫做 `custom_lint`
    
-   执行命令 `candies_lints custom_lint`, 一个简单插件模板创建成功.
+   执行命令 `candies_analyzer_plugin custom_lint`, 一个简单插件模板创建成功.
 
 3. 将 `custom_lint` 增加到 根目录 `pubspec.yaml` 的 `dev_dependencies` 中
 
@@ -99,18 +103,18 @@ analyzer:
 我们将在 main 方法中启动我们的插件.
 
 ``` dart
-CandiesLintsPlugin get plugin => CustomLintPlugin();
+CandiesAnalyzerPlugin get plugin => CustomLintPlugin();
 
 // This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
-  CandiesLintsStarter.start(
+  CandiesAnalyzerPluginStarter.start(
     args,
     sendPort,
     plugin: plugin,
   );
 }
 
-class CustomLintPlugin extends CandiesLintsPlugin {
+class CustomLintPlugin extends CandiesAnalyzerPlugin {
   @override
   String get name => 'custom_lint';
 
@@ -171,7 +175,7 @@ class PerferCandiesClassPrefix extends DartLint {
   String get code => 'perfer_candies_class_prefix';
 
   @override
-  String? get url => 'https://github.com/fluttercandies/candies_lints';
+  String? get url => 'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   @override
   SyntacticEntity? matchLint(AstNode node) {
@@ -362,7 +366,7 @@ import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'plugin.dart';
 
 Future<void> main(List<String> args) async {
@@ -370,7 +374,7 @@ Future<void> main(List<String> args) async {
   final AnalysisContextCollection collection =
       AnalysisContextCollection(includedPaths: <String>[root]);
 
-  final CandiesLintsPlugin myPlugin = plugin;
+  final CandiesAnalyzerPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
       if (!myPlugin.shouldAnalyzeFile(file, context)) {
@@ -424,7 +428,7 @@ windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
 
 如果你的代码改变了, 请删除掉 `.plugin_manager` 下面的文件
 
-或者通过执行 `candies_lints clear_cache` 来删除 `.plugin_manager` 下面的文件. 
+或者通过执行 `candies_analyzer_plugin clear_cache` 来删除 `.plugin_manager` 下面的文件. 
 
 
 1. 把新的代码写到 custom_lint 下面
@@ -460,7 +464,7 @@ dependencies:
   custom_lint: 
     # absolute path  
     path: xxx/xxx/custom_lint
-  candies_lints: any
+  candies_analyzer_plugin: any
   path: any
   analyzer: any
   analyzer_plugin: any
@@ -485,18 +489,18 @@ dependencies:
 
 在被分析的项目根目录会生成  `custom_lint.log`，用于查看分析过程的信息。
 
-1. 你可以关闭. 
+1. 为了性能，默认是关闭的，你可以打开. 
 
-   `CandiesLintsLogger().shouldLog = false;`
+   `CandiesAnalyzerPluginLogger().shouldLog = true;`
 
 2. 你可以更改日志的名字 
 
-   `CandiesLintsLogger().logFileName = 'your name';`
+   `CandiesAnalyzerPluginLogger().logFileName = 'your name';`
 
 3. 记录信息
    
 ``` dart
-   CandiesLintsLogger().log(
+   CandiesAnalyzerPluginLogger().log(
         'info',
         // which location custom_lint.log will be generated
         root: result.root,
@@ -506,7 +510,7 @@ dependencies:
 4. 记录错误
 
 ``` dart
-   CandiesLintsLogger().logError(
+   CandiesAnalyzerPluginLogger().logError(
      'analyze file failed:',
      root: analysisContext.root,
      error: e,
@@ -649,6 +653,26 @@ class EndCallSuperDispose extends DartLint with CallSuperDisposeMixin {
 }
 ```
 
+## Completion
+
+### Make a custom completion
+
+你可以定义自己的 `CompletionContributor` , `ExtensionMemberContributor` 是默认自带的.
+
+``` dart
+  /// The completionContributors to finish CompletionRequest
+  List<CompletionContributor> get completionContributors =>
+      <CompletionContributor>[
+        ExtensionMemberContributor(),
+      ];
+``` 
+
+### 扩展方法提示
+
+虽然官方已经关闭了这个问题 [Auto import (or quickfix?) for Extensions · Issue #38894 · dart-lang/sdk (github.com)](https://github.com/dart-lang/sdk/issues/38894) , 但是在不同的编辑器中依然有很多问题。
+
+`ExtensionMemberContributor` 帮助更好的处理扩展.
+
 ## 注意事项 
 ### print lag
 
@@ -658,12 +682,15 @@ class EndCallSuperDispose extends DartLint with CallSuperDisposeMixin {
 
 只有当你在 `pubspec.yaml` 和 `analysis_options.yaml` 中添加了 `custom_lint`，分析才会进行
    
-1. 将 `custom_lint` 添加到  `pubspec.yaml` 中的 `dev_dependencies`  , 查看 [pubspec.yaml](https://github.com/fluttercandies/candies_lints/example/pubspec.yaml)
+1. 将 `custom_lint` 添加到  `pubspec.yaml` 中的 `dev_dependencies`  , 查看 [pubspec.yaml](https://github.com/fluttercandies/candies_analyzer_plugin/example/pubspec.yaml)
    
-2. 将 `custom_lint` 添加到 `analysis_options.yaml` 中的 `analyzer` `plugins` ，查看 [analysis_options.yaml](https://github.com/fluttercandies/candies_lints/example/analysis_options.yaml)
+2. 将 `custom_lint` 添加到 `analysis_options.yaml` 中的 `analyzer` `plugins` ，查看 [analysis_options.yaml](https://github.com/fluttercandies/candies_analyzer_plugin/example/analysis_options.yaml)
 
 
-### 快速修复只支持 dart 文件.
+### 在 vscode 中快速修复只支持 dart 文件.(android studio支持任何文件)
 
 [issue](https://github.com/dart-lang/sdk/issues/50306)
 
+### 提示自动导入在 vscode 无法完成
+
+[issue](https://github.com/dart-lang/sdk/issues/50449)

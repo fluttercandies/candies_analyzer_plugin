@@ -11,21 +11,23 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_yaml.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'package:analyzer/src/pubspec/pubspec_validator.dart';
 
-CandiesLintsPlugin get plugin => CustomLintPlugin();
+CandiesAnalyzerPlugin get plugin => CustomLintPlugin();
 
 // This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
-  CandiesLintsStarter.start(
+  // for performance, default is false, if you want to check log, set it to true.
+  CandiesAnalyzerPluginLogger().shouldLog = true;
+  CandiesAnalyzerPluginStarter.start(
     args,
     sendPort,
     plugin: plugin,
   );
 }
 
-class CustomLintPlugin extends CandiesLintsPlugin {
+class CustomLintPlugin extends CandiesAnalyzerPlugin {
   @override
   String get name => 'custom_lint';
 
@@ -55,7 +57,8 @@ class PerferCandiesClassPrefix extends DartLint {
   String get code => 'perfer_candies_class_prefix';
 
   @override
-  String? get url => 'https://github.com/fluttercandies/candies_lints';
+  String? get url =>
+      'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   @override
   SyntacticEntity? matchLint(AstNode node) {

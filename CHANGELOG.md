@@ -1,3 +1,9 @@
+## 3.0.0
+
+* rename `candies_lints` to `candies_analyzer_plugin`.
+* support to get suggestion and auto import for extension member.
+* breaking change some classes are refactored.
+
 ## 2.0.3
 
 * remove dartLints.isEmpty in analyzeFile and handleEditGetFixes methods.

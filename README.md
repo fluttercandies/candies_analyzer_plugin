@@ -1,6 +1,6 @@
-# candies_lints
+# candies_analyzer_plugin
 
-[![pub package](https://img.shields.io/pub/v/candies_lints.svg)](https://pub.dartlang.org/packages/candies_lints) [![GitHub stars](https://img.shields.io/github/stars/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/stargazers) [![GitHub forks](https://img.shields.io/github/forks/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/network) [![GitHub license](https://img.shields.io/github/license/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/fluttercandies/candies_lints)](https://github.com/fluttercandies/candies_lints/issues) <a target="_blank" href="https://jq.qq.com/?_wv=1027&k=5bcc0gy"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="flutter-candies" title="flutter-candies"></a>
+[![pub package](https://img.shields.io/pub/v/candies_analyzer_plugin.svg)](https://pub.dartlang.org/packages/candies_analyzer_plugin) [![GitHub stars](https://img.shields.io/github/stars/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/stargazers) [![GitHub forks](https://img.shields.io/github/forks/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/network) [![GitHub license](https://img.shields.io/github/license/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/issues) <a target="_blank" href="https://jq.qq.com/?_wv=1027&k=5bcc0gy"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="flutter-candies" title="flutter-candies"></a>
 
 Languages: English | [中文简体](README-ZH.md)
 
@@ -8,7 +8,7 @@ Languages: English | [中文简体](README-ZH.md)
 
 The plugin to help create custom lint quickly.
 
-- [candies_lints](#candies_lints)
+- [candies_analyzer_plugin](#candies_analyzer_plugin)
   - [Description](#description)
   - [Create Template](#create-template)
   - [Add your lint](#add-your-lint)
@@ -33,19 +33,23 @@ The plugin to help create custom lint quickly.
     - [PerferSafeSetState](#perfersafesetstate)
     - [MustCallSuperDispose](#mustcallsuperdispose)
     - [EndCallSuperDispose](#endcallsuperdispose)
+  - [Completion](#completion)
+    - [Make a custom completion](#make-a-custom-completion)
+    - [Suggestions of Extension Member](#suggestions-of-extension-member)
   - [Note](#note)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
-    - [quick fixes are only supported for dart files.](#quick-fixes-are-only-supported-for-dart-files)
+    - [quick fixes are only supported for dart files in vscode.(android studio support any type of file)](#quick-fixes-are-only-supported-for-dart-files-in-vscodeandroid-studio-support-any-type-of-file)
+    - [completion auto import is not working in vscode](#completion-auto-import-is-not-working-in-vscode)
 
-* [example](https://github.com/fluttercandies/candies_lints/example)
+* [example](https://github.com/fluttercandies/candies_analyzer_plugin/example)
 
 * [analyzer_plugin doc](https://github.com/dart-lang/sdk/blob/master/pkg/analyzer_plugin/doc/tutorial/tutorial.md)
 ## Create Template
 
 1. activate plugin
 
-   run `dart pub global activate candies_lints`
+   run `dart pub global activate candies_analyzer_plugin`
 
 
 2. cd to your project
@@ -56,7 +60,7 @@ The plugin to help create custom lint quickly.
    
    your lint plugin is `custom_lint`
    
-   run `candies_lints custom_lint`, a simple lint plugin is generated.
+   run `candies_analyzer_plugin custom_lint`, a simple lint plugin is generated.
 
 3. add `custom_lint` into `dev_dependencies` of the root `pubspec.yaml`  
 
@@ -98,18 +102,18 @@ find `plugin.dart` base on following project tree
 we start plugin in this file.
 
 ``` dart
-CandiesLintsPlugin get plugin => CustomLintPlugin();
+CandiesAnalyzerPlugin get plugin => CustomLintPlugin();
 
 // This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
-  CandiesLintsStarter.start(
+  CandiesAnalyzerPluginStarter.start(
     args,
     sendPort,
     plugin: plugin,
   );
 }
 
-class CustomLintPlugin extends CandiesLintsPlugin {
+class CustomLintPlugin extends CandiesAnalyzerPlugin {
   @override
   String get name => 'custom_lint';
 
@@ -171,7 +175,7 @@ class PerferCandiesClassPrefix extends DartLint {
   String get code => 'perfer_candies_class_prefix';
 
   @override
-  String? get url => 'https://github.com/fluttercandies/candies_lints';
+  String? get url => 'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   @override
   SyntacticEntity? matchLint(AstNode node) {
@@ -363,7 +367,7 @@ import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'plugin.dart';
 
 Future<void> main(List<String> args) async {
@@ -371,7 +375,7 @@ Future<void> main(List<String> args) async {
   final AnalysisContextCollection collection =
       AnalysisContextCollection(includedPaths: <String>[root]);
 
-  final CandiesLintsPlugin myPlugin = plugin;
+  final CandiesAnalyzerPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
       if (!myPlugin.shouldAnalyzeFile(file, context)) {
@@ -424,7 +428,7 @@ windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
 
 if your code is changed, please remove the files under `.plugin_manager`.
 
-or you can run `candies_lints clear_cache` to remove the files under `.plugin_manager`. 
+or you can run `candies_analyzer_plugin clear_cache` to remove the files under `.plugin_manager`. 
 
 
 1. write new code under custom_lint folder
@@ -459,7 +463,7 @@ dependencies:
   custom_lint: 
     # absolute path  
     path: xxx/xxx/custom_lint
-  candies_lints: any
+  candies_analyzer_plugin: any
   path: any
   analyzer: any
   analyzer_plugin: any
@@ -482,20 +486,21 @@ now, you can see the new change.
 
 ## Log
 
-Under the project  `custom_lint.log` will be generated.
 
-1. you can close Log. 
+1. for performance, default is false, if you want to check log, set it to true. you can open Log. 
 
-   `CandiesLintsLogger().shouldLog = false;`
+   `CandiesAnalyzerPluginLogger().shouldLog = true;`
+
+Under the project  `custom_lint.log` will be generated.   
 
 2. you can custom log name 
 
-   `CandiesLintsLogger().logFileName = 'your name';`
+   `CandiesAnalyzerPluginLogger().logFileName = 'your name';`
 
 3. log info
    
 ``` dart
-   CandiesLintsLogger().log(
+   CandiesAnalyzerPluginLogger().log(
         'info',
         // which location custom_lint.log will be generated
         root: result.root,
@@ -505,7 +510,7 @@ Under the project  `custom_lint.log` will be generated.
 4. log error
 
 ``` dart
-   CandiesLintsLogger().logError(
+   CandiesAnalyzerPluginLogger().logError(
      'analyze file failed:',
      root: analysisContext.root,
      error: e,
@@ -647,6 +652,26 @@ class EndCallSuperDispose extends DartLint with CallSuperDisposeMixin {
 }
 ```
 
+## Completion
+
+### Make a custom completion
+
+you can define your `CompletionContributor` in `completionContributors`, `ExtensionMemberContributor` is default.
+
+``` dart
+  /// The completionContributors to finish CompletionRequest
+  List<CompletionContributor> get completionContributors =>
+      <CompletionContributor>[
+        ExtensionMemberContributor(),
+      ];
+``` 
+
+### Suggestions of Extension Member
+
+Although dart team had close the issue [Auto import (or quickfix?) for Extensions · Issue #38894 · dart-lang/sdk (github.com)](https://github.com/dart-lang/sdk/issues/38894) , but still has many problems when developing in different ide.
+
+`ExtensionMemberContributor` help to handle extension member easily.
+
 ## Note 
 ### print lag
 
@@ -656,13 +681,17 @@ don't write `print` in the process of analyzing in your plugin, analysis will la
 
 you must do following things to support your project to be analyzed.
    
-1. add `custom_lint` into `dev_dependencies` in `pubspec.yaml` , see [pubspec.yaml](https://github.com/fluttercandies/candies_lints/example/pubspec.yaml)
+1. add `custom_lint` into `dev_dependencies` in `pubspec.yaml` , see [pubspec.yaml](https://github.com/fluttercandies/candies_analyzer_plugin/example/pubspec.yaml)
    
-2. add `custom_lint` into `analyzer` `plugins` in `analysis_options.yaml` see [analysis_options.yaml](https://github.com/fluttercandies/candies_lints/example/analysis_options.yaml)
+2. add `custom_lint` into `analyzer` `plugins` in `analysis_options.yaml` see [analysis_options.yaml](https://github.com/fluttercandies/candies_analyzer_plugin/example/analysis_options.yaml)
 
-### quick fixes are only supported for dart files.
+### quick fixes are only supported for dart files in vscode.(android studio support any type of file)
 
 [issue](https://github.com/dart-lang/sdk/issues/50306)
+
+### completion auto import is not working in vscode
+
+[issue](https://github.com/dart-lang/sdk/issues/50449)
 
 
 

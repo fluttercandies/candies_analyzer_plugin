@@ -8,24 +8,24 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:analyzer_plugin/src/utilities/change_builder/change_builder_core.dart';
-import 'package:candies_lints/src/extension.dart';
-import 'package:candies_lints/src/ignore_info.dart';
-import 'package:candies_lints/src/log.dart';
-import 'package:candies_lints/src/config.dart';
-import 'package:candies_lints/src/error/dart.dart';
-import 'package:candies_lints/src/lints/lint.dart';
+import 'package:candies_analyzer_plugin/src/error/error/dart.dart';
+import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
+import 'package:candies_analyzer_plugin/src/extension.dart';
+import 'package:candies_analyzer_plugin/src/ignore_info.dart';
+import 'package:candies_analyzer_plugin/src/log.dart';
+import 'package:candies_analyzer_plugin/src/config.dart';
 
 /// The dart lint base
 abstract class DartLint extends CandyLint {
   Iterable<DartAnalysisError> toDartAnalysisErrors({
     required ResolvedUnitResult result,
-    required CandiesLintsIgnoreInfo ignoreInfo,
-    required CandiesLintsConfig? config,
+    required CandiesAnalyzerPluginIgnoreInfo ignoreInfo,
+    required CandiesAnalyzerPluginConfig? config,
   }) sync* {
     final Map<SyntacticEntity, AstNode> copy = <SyntacticEntity, AstNode>{};
     copy.addAll(_astNodes);
     if (copy.isNotEmpty) {
-      CandiesLintsLogger().log(
+      CandiesAnalyzerPluginLogger().log(
         'find ${copy.length} lint($code) at ${result.path}',
         root: result.root,
       );
@@ -49,7 +49,7 @@ abstract class DartLint extends CandyLint {
         errors.add(error);
         yield error;
       } else {
-        CandiesLintsLogger().log(
+        CandiesAnalyzerPluginLogger().log(
           'ignore code: $code at ${result.lineNumber(syntacticEntity.offset)} line in ${result.path}',
           root: result.root,
         );
@@ -97,7 +97,7 @@ abstract class DartLint extends CandyLint {
 
     fixes = fixes.reversed.toList();
 
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'get ${fixes.length} fixes for lint($code) at ${error.result.path}',
       root: error.result.root,
     );
@@ -113,7 +113,7 @@ abstract class DartLint extends CandyLint {
 
   Future<SourceChange> ignoreForThisFile({
     required ResolvedUnitResult resolvedUnitResult,
-    required CandiesLintsIgnoreInfo ignore,
+    required CandiesAnalyzerPluginIgnoreInfo ignore,
   }) {
     return getDartFix(
       resolvedUnitResult: resolvedUnitResult,
@@ -129,7 +129,7 @@ abstract class DartLint extends CandyLint {
 
   Future<SourceChange> ignoreForThisLine({
     required ResolvedUnitResult resolvedUnitResult,
-    required CandiesLintsIgnoreInfo ignore,
+    required CandiesAnalyzerPluginIgnoreInfo ignore,
     required Location location,
     required String code,
   }) {
@@ -178,10 +178,10 @@ abstract class DartLint extends CandyLint {
     required ResolvedUnitResult result,
     required Location location,
     required AstNode astNode,
-    required CandiesLintsIgnoreInfo ignoreInfo,
-    required CandiesLintsConfig? config,
+    required CandiesAnalyzerPluginIgnoreInfo ignoreInfo,
+    required CandiesAnalyzerPluginConfig? config,
   }) {
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'find error: $code at ${location.startLine} line in ${result.path}',
       root: result.root,
     );

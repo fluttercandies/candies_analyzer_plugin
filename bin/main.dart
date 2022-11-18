@@ -6,7 +6,7 @@ import 'package:path/path.dart' as path;
 
 void main(List<String> args) {
   if (args.isEmpty) {
-    print('please run as \'candies_lints plugin_name\'');
+    print('please run as \'candies_analyzer_plugin plugin_name\'');
   }
 
   final String arg = args.first;
@@ -106,21 +106,23 @@ import 'package:analyzer/source/line_info.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'package:analyzer/src/pubspec/pubspec_validator.dart';
 
-CandiesLintsPlugin get plugin => CustomLintPlugin();
+CandiesAnalyzerPlugin get plugin => CustomLintPlugin();
 
 // This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
-  CandiesLintsStarter.start(
+  // for performance, default is false, if you want to check log, set it to true.
+  CandiesAnalyzerPluginLogger().shouldLog = false;  
+  CandiesAnalyzerPluginStarter.start(
     args,
     sendPort,
     plugin: plugin,
   );
 }
 
-class CustomLintPlugin extends CandiesLintsPlugin {
+class CustomLintPlugin extends CandiesAnalyzerPlugin {
   @override
   String get name => '{0}';
 
@@ -151,7 +153,7 @@ class PerferCandiesClassPrefix extends DartLint {
   String get code => 'perfer_candies_class_prefix';
 
   @override
-  String? get url => 'https://github.com/fluttercandies/candies_lints';
+  String? get url => 'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   @override
   SyntacticEntity? matchLint(AstNode node) {
@@ -318,7 +320,7 @@ environment:
   sdk: '>=2.17.6 <3.0.0'
 
 dependencies:
-  candies_lints: any
+  candies_analyzer_plugin: any
   path: any
   analyzer: any
   analyzer_plugin: any
@@ -335,7 +337,7 @@ import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'plugin.dart';
 
 Future<void> main(List<String> args) async {
@@ -343,7 +345,7 @@ Future<void> main(List<String> args) async {
   final AnalysisContextCollection collection =
       AnalysisContextCollection(includedPaths: <String>[root]);
 
-  final CandiesLintsPlugin myPlugin = plugin;
+  final CandiesAnalyzerPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
       if (!myPlugin.shouldAnalyzeFile(file, context)) {

@@ -1,7 +1,7 @@
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
-import 'package:candies_lints/src/ignore_info.dart';
+import 'package:candies_analyzer_plugin/src/ignore_info.dart';
 
 /// The cache error for get fixes
 class DartAnalysisError extends AnalysisError {
@@ -32,5 +32,5 @@ class DartAnalysisError extends AnalysisError {
   final ResolvedUnitResult result;
 
   /// The ignore info for file which this error is in.
-  final CandiesLintsIgnoreInfo ignoreInfo;
+  final CandiesAnalyzerPluginIgnoreInfo ignoreInfo;
 }

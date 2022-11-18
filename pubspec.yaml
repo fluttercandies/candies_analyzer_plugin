@@ -1,7 +1,7 @@
-name: candies_lints
-description: The plugin to help create custom lint quickly and provide some useful lints.
-version: 2.0.3
-homepage: https://github.com/fluttercandies/candies_lints
+name: candies_analyzer_plugin
+description: The plugin to help create custom analyzer plugin quickly and provide some useful lints and get suggestion and auto import for extension member.
+version: 3.0.0
+homepage: https://github.com/fluttercandies/candies_analyzer_plugin
 
 environment:
   sdk: '>=2.17.6 <3.0.0'
@@ -19,6 +19,6 @@ dev_dependencies:
   test: ^1.21.4
 
 executables:
-  candies_lints: main
+  candies_analyzer_plugin: main
 
 # dart pub global activate --source path ./

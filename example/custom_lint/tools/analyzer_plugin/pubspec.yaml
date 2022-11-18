@@ -7,13 +7,12 @@ environment:
   sdk: '>=2.17.6 <3.0.0'
 
 dependencies:
-  candies_lints: any
+  candies_analyzer_plugin: any
   path: any
   analyzer: any
   analyzer_plugin: any
 dependency_overrides:
-  #candies_lints:
-    #path: 
+
 dev_dependencies:
   lints: any
   test: any

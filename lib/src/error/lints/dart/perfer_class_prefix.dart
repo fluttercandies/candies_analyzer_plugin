@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
-import 'package:candies_lints/src/extension.dart';
+import 'package:candies_analyzer_plugin/src/extension.dart';
 import 'dart_lint.dart';
 
 /// The 'perfer_class_prefix' lint
@@ -18,7 +18,8 @@ class PerferClassPrefix extends DartLint {
   String get code => 'perfer_${prefix}_class_prefix';
 
   @override
-  String? get url => 'https://github.com/fluttercandies/candies_lints';
+  String? get url =>
+      'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   @override
   SyntacticEntity? matchLint(AstNode node) {

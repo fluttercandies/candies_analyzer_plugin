@@ -5,36 +5,38 @@ import 'dart:io' as io;
 import 'package:path/path.dart' as path;
 
 /// The logger for this plugin
-class CandiesLintsLogger {
-  factory CandiesLintsLogger() => _candiesLintsLogger;
-  CandiesLintsLogger._();
-  static final CandiesLintsLogger _candiesLintsLogger = CandiesLintsLogger._();
+class CandiesAnalyzerPluginLogger {
+  factory CandiesAnalyzerPluginLogger() => _candiesAnalyzerPluginLogger;
+  CandiesAnalyzerPluginLogger._();
+  static final CandiesAnalyzerPluginLogger _candiesAnalyzerPluginLogger =
+      CandiesAnalyzerPluginLogger._();
   final Map<String, Logger> _loggers = <String, Logger>{};
 
   /// The name of log file
-  String logFileName = 'candies_lints';
+  String logFileName = 'candies_analyzer_plugin';
 
   /// whether should log
-  bool shouldLog = true;
+  bool shouldLog = false;
   void _init(String root) {
-    if (shouldLog) {
-      if (!_loggers.containsKey(root)) {
-        _loggers[root] = Logger(
-            filter: _Filter(),
-            printer: PrettyPrinter(
-              methodCount: 0,
-              printTime: true,
-            ),
-            output: FileOutput(
-              file: io.File(path.join(
-                root,
-                '$logFileName.log',
-              )),
-              overrideExisting: true,
-            ));
+    if (!shouldLog) {
+      return;
+    }
+    if (!_loggers.containsKey(root)) {
+      _loggers[root] = Logger(
+          filter: _Filter(),
+          printer: PrettyPrinter(
+            methodCount: 0,
+            printTime: true,
+          ),
+          output: FileOutput(
+            file: io.File(path.join(
+              root,
+              '$logFileName.log',
+            )),
+            overrideExisting: true,
+          ));
 
-        log('analyze at : $root', root: root);
-      }
+      log('analyze at : $root', root: root);
     }
   }
 
@@ -45,6 +47,9 @@ class CandiesLintsLogger {
     dynamic error,
     StackTrace? stackTrace,
   }) {
+    if (!shouldLog) {
+      return;
+    }
     _init(root);
     _loggers[root]?.d(message, error, stackTrace);
   }
@@ -56,6 +61,9 @@ class CandiesLintsLogger {
     dynamic error,
     StackTrace? stackTrace,
   }) {
+    if (!shouldLog) {
+      return;
+    }
     _init(root);
     _loggers[root]?.e(message, error, stackTrace);
   }

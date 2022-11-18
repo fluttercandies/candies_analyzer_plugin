@@ -1,6 +1,10 @@
-part of 'plugin.dart';
+import 'package:analyzer/dart/analysis/analysis_context.dart';
+import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer_plugin/plugin/plugin.dart';
+import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 
-mixin DartFilePlugin on ServerPlugin {
+mixin CandiesDartFileErrorPlugin on ServerPlugin {
   /// AstVisitor to check lint
   AstVisitorBase get astVisitor => CandiesLintsAstVisitor();
 
@@ -16,14 +20,14 @@ mixin DartFilePlugin on ServerPlugin {
   Future<Iterable<AnalysisError>> analyzeDartFile({
     required AnalysisContext analysisContext,
     required String path,
-    required CandiesLintsConfig config,
+    required CandiesAnalyzerPluginConfig config,
   }) async {
     final SomeResolvedUnitResult unitResult =
         await analysisContext.currentSession.getResolvedUnit(path);
     if (unitResult is ResolvedUnitResult) {
       return getDartErrorsFromResult(unitResult, config);
     }
-    CandiesLintsLogger().logError('getResolvedUnit failed for $path',
+    CandiesAnalyzerPluginLogger().logError('getResolvedUnit failed for $path',
         root: analysisContext.root);
     return <AnalysisError>[];
   }
@@ -31,11 +35,11 @@ mixin DartFilePlugin on ServerPlugin {
   /// Return AnalysisError List base on ResolvedUnitResult.
   Iterable<AnalysisError> getDartErrorsFromResult(
     ResolvedUnitResult unitResult,
-    CandiesLintsConfig config,
+    CandiesAnalyzerPluginConfig config,
   ) {
     unitResult.unit.visitChildren(config.astVisitor);
-    final CandiesLintsIgnoreInfo ignore =
-        CandiesLintsIgnoreInfo.forDart(unitResult);
+    final CandiesAnalyzerPluginIgnoreInfo ignore =
+        CandiesAnalyzerPluginIgnoreInfo.forDart(unitResult);
     return config.astVisitor
         .getAnalysisErrors(
           result: unitResult,

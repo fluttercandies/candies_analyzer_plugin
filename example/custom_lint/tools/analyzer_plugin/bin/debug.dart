@@ -3,7 +3,7 @@ import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'plugin.dart';
 
 Future<void> main(List<String> args) async {
@@ -11,7 +11,7 @@ Future<void> main(List<String> args) async {
   final AnalysisContextCollection collection =
       AnalysisContextCollection(includedPaths: <String>[root]);
 
-  final CandiesLintsPlugin myPlugin = plugin;
+  final CandiesAnalyzerPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
     for (final String file in context.contextRoot.analyzedFiles()) {
       if (!myPlugin.shouldAnalyzeFile(file, context)) {

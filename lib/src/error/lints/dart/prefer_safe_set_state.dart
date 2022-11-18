@@ -3,7 +3,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
-import 'package:candies_lints/src/extension.dart';
+import 'package:candies_analyzer_plugin/src/extension.dart';
 
 import 'dart_lint.dart';
 
@@ -19,7 +19,8 @@ class PerferSafeSetState extends DartLint {
   String? get correction => 'Add if(mounted){} for setState';
 
   @override
-  String? get url => 'https://github.com/fluttercandies/candies_lints';
+  String? get url =>
+      'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   @override
   Future<List<SourceChange>> getDartFixes(

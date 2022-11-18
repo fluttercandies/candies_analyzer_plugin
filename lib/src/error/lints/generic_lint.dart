@@ -4,19 +4,20 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
-import 'package:candies_lints/src/config.dart';
-import 'package:candies_lints/src/error/generic.dart';
-import 'package:candies_lints/src/extension.dart';
-import 'package:candies_lints/src/lints/lint.dart';
-import 'package:candies_lints/src/log.dart';
+import 'package:candies_analyzer_plugin/src/config.dart';
+import 'package:candies_analyzer_plugin/src/error/error/generic.dart';
+import 'package:candies_analyzer_plugin/src/extension.dart';
+import 'package:candies_analyzer_plugin/src/log.dart';
 import 'package:path/path.dart' as path_package;
+
+import 'lint.dart';
 
 /// The generic lint base
 abstract class GenericLint extends CandyLint {
   Iterable<GenericAnalysisError> toGenericAnalysisErrors({
     required AnalysisContext analysisContext,
     required String path,
-    required CandiesLintsConfig? config,
+    required CandiesAnalyzerPluginConfig? config,
     required String content,
     required LineInfo lineInfo,
   }) sync* {
@@ -26,7 +27,7 @@ abstract class GenericLint extends CandyLint {
       lineInfo,
     ).toList();
 
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'find ${nodes.length} yaml lint($code) at $path',
       root: analysisContext.root,
     );
@@ -94,7 +95,7 @@ abstract class GenericLint extends CandyLint {
       fixes = fixes.reversed.toList();
     }
 
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'get ${fixes.length} fixes for yaml lint($code) at $path',
       root: analysisContext.root,
     );
@@ -144,10 +145,10 @@ abstract class GenericLint extends CandyLint {
     required AnalysisContext analysisContext,
     required String path,
     required Location location,
-    required CandiesLintsConfig? config,
+    required CandiesAnalyzerPluginConfig? config,
     required String content,
   }) {
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'find error: $code at ${location.startLine} line in $path',
       root: analysisContext.root,
     );

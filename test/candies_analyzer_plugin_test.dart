@@ -11,13 +11,10 @@ import 'package:analyzer/source/line_info.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer/src/ignore_comments/ignore_info.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_lints/src/ignore_info.dart';
-
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'package:analyzer/src/util/glob.dart';
-import 'package:candies_lints/src/plugin/plugin.dart';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as path;
-import 'package:yaml/yaml.dart';
 
 Future<void> main() async {
   final String debugFilePath =
@@ -27,7 +24,7 @@ Future<void> main() async {
     final AnalysisContextCollection collection =
         AnalysisContextCollection(includedPaths: <String>[debugFilePath]);
 
-    final CandiesLintsPlugin myPlugin = CandiesLintsPlugin();
+    final CandiesAnalyzerPlugin myPlugin = CandiesAnalyzerPlugin();
     for (final AnalysisContext context in collection.contexts) {
       for (final String file in context.contextRoot.analyzedFiles()) {
         if (!myPlugin.shouldAnalyzeFile(file, context)) {
@@ -64,8 +61,8 @@ Future<void> main() async {
     final int offset =
         result.content.indexOf('onDoubleTap: () => setState(() {})');
     final CharacterLocation characterLocation = lineInfo.getLocation(offset);
-    final CandiesLintsIgnoreInfo ignore =
-        CandiesLintsIgnoreInfo.forDart(result);
+    final CandiesAnalyzerPluginIgnoreInfo ignore =
+        CandiesAnalyzerPluginIgnoreInfo.forDart(result);
     ignore.fixIgnoreForThisLine(
         'ddd',
         Location(
@@ -83,8 +80,8 @@ Future<void> main() async {
     final LineInfo lineInfo = LineInfo.fromContent(result.content);
     final int offset = result.content.indexOf('onTap: () => setState(() {})');
     final CharacterLocation characterLocation = lineInfo.getLocation(offset);
-    final CandiesLintsIgnoreInfo ignore =
-        CandiesLintsIgnoreInfo.forDart(result);
+    final CandiesAnalyzerPluginIgnoreInfo ignore =
+        CandiesAnalyzerPluginIgnoreInfo.forDart(result);
     ignore.fixIgnoreForThisLine(
         'ddd',
         Location(

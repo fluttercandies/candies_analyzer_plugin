@@ -26,8 +26,8 @@ mixin AstVisitorBase on AstVisitor<void> {
 
   Iterable<AnalysisError> getAnalysisErrors({
     required ResolvedUnitResult result,
-    required CandiesLintsIgnoreInfo ignore,
-    required CandiesLintsConfig? config,
+    required CandiesAnalyzerPluginIgnoreInfo ignore,
+    required CandiesAnalyzerPluginConfig? config,
   }) sync* {
     for (final DartLint lint in lints) {
       yield* lint.toDartAnalysisErrors(

@@ -6,7 +6,7 @@ import 'package:analyzer/source/error_processor.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
 
 /// The extension for ResolvedUnitResult
 extension ResolvedUnitResultE on ResolvedUnitResult {

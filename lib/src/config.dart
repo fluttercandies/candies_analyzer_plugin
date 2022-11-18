@@ -9,13 +9,13 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/source/error_processor.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_lints/src/extension.dart';
-import 'package:candies_lints/src/ignore_info.dart';
-import 'package:candies_lints/src/error/dart.dart';
-import 'package:candies_lints/src/lints/dart/dart_lint.dart';
-import 'package:candies_lints/src/lints/generic_lint.dart';
-import 'package:candies_lints/src/lints/lint.dart';
-import 'package:candies_lints/src/lints/yaml_lint.dart';
+import 'package:candies_analyzer_plugin/src/error/error/dart.dart';
+import 'package:candies_analyzer_plugin/src/error/lints/dart/dart_lint.dart';
+import 'package:candies_analyzer_plugin/src/error/lints/generic_lint.dart';
+import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
+import 'package:candies_analyzer_plugin/src/error/lints/yaml_lint.dart';
+import 'package:candies_analyzer_plugin/src/extension.dart';
+import 'package:candies_analyzer_plugin/src/ignore_info.dart';
 import 'package:path/path.dart' as path_context;
 import 'package:pubspec_parse/pubspec_parse.dart';
 import 'package:yaml/yaml.dart';
@@ -25,8 +25,8 @@ import 'package:analyzer/src/util/file_paths.dart' as file_paths;
 part 'ast_visitor.dart';
 
 /// The class to handle pubspec.yaml and analysis_options.yaml
-class CandiesLintsConfig {
-  CandiesLintsConfig({
+class CandiesAnalyzerPluginConfig {
+  CandiesAnalyzerPluginConfig({
     required this.context,
     required this.pluginName,
     required List<DartLint> dartLints,

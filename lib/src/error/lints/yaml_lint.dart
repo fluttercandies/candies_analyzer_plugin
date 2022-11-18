@@ -5,14 +5,14 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_yaml.dart';
-import 'package:candies_lints/candies_lints.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 
 /// The yaml lint base
 abstract class YamlLint extends CandyLint {
   Iterable<YamlAnalysisError> toYamlAnalysisErrors({
     required AnalysisContext analysisContext,
     required String path,
-    required CandiesLintsConfig? config,
+    required CandiesAnalyzerPluginConfig? config,
     required YamlNode root,
     required String content,
     required LineInfo lineInfo,
@@ -23,7 +23,7 @@ abstract class YamlLint extends CandyLint {
       lineInfo,
     ).toList();
 
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'find ${nodes.length} yaml lint($code) at $path',
       root: analysisContext.root,
     );
@@ -92,7 +92,7 @@ abstract class YamlLint extends CandyLint {
       fixes = fixes.reversed.toList();
     }
 
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'get ${fixes.length} fixes for yaml lint($code) at $path',
       root: analysisContext.root,
     );
@@ -142,11 +142,11 @@ abstract class YamlLint extends CandyLint {
     required AnalysisContext analysisContext,
     required String path,
     required Location location,
-    required CandiesLintsConfig? config,
+    required CandiesAnalyzerPluginConfig? config,
     required YamlNode root,
     required String content,
   }) {
-    CandiesLintsLogger().log(
+    CandiesAnalyzerPluginLogger().log(
       'find error: $code at ${location.startLine} line in $path',
       root: analysisContext.root,
     );
