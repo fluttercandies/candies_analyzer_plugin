@@ -1,7 +1,7 @@
 name: candies_lints
 description: The plugin to help create custom lint quickly and provide some useful lints.
 version: 2.0.3
-homepage: https://github.com/fluttercandies/candies_lints
+homepage: https://github.com/fluttercandies/candies_analyzer_plugin
 
 environment:
   sdk: '>=2.17.6 <3.0.0'
