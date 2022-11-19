@@ -1,3 +1,7 @@
+## 2.0.4
+
+* this package is deprecated. now you can use plugin [candies_analyzer_plugin](https://pub.dev/packages/candies_analyzer_plugin)
+
 ## 2.0.3
 
 * remove dartLints.isEmpty in analyzeFile and handleEditGetFixes methods.
