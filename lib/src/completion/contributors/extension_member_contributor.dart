@@ -221,8 +221,6 @@ class ExtensionMemberContributor implements CompletionContributor {
         continue;
       }
 
-      // dart will not ddd
-
       if (depth == 0) {
         // analysis_server not check other library to export
 

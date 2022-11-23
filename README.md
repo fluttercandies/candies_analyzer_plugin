@@ -8,7 +8,7 @@ Languages: English | [中文简体](README-ZH.md)
 
 The plugin to help create custom lint quickly.
 
-- [candies_analyzer_plugin](#candies_analyzer_plugin)
+- [candies\_analyzer\_plugin](#candies_analyzer_plugin)
   - [Description](#description)
   - [Create Template](#create-template)
   - [Add your lint](#add-your-lint)
@@ -33,12 +33,13 @@ The plugin to help create custom lint quickly.
     - [PerferSafeSetState](#perfersafesetstate)
     - [MustCallSuperDispose](#mustcallsuperdispose)
     - [EndCallSuperDispose](#endcallsuperdispose)
+    - [PerferDocComments](#perferdoccomments)
   - [Completion](#completion)
     - [Make a custom completion](#make-a-custom-completion)
     - [Suggestions of Extension Member](#suggestions-of-extension-member)
   - [Note](#note)
     - [print lag](#print-lag)
-    - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
+    - [pubspec.yaml and analysis\_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
     - [quick fixes are only supported for dart files in vscode.(android studio support any type of file)](#quick-fixes-are-only-supported-for-dart-files-in-vscodeandroid-studio-support-any-type-of-file)
     - [completion auto import is not working in vscode](#completion-auto-import-is-not-working-in-vscode)
 
@@ -167,6 +168,7 @@ Important methodes:
 
 #### dart lint
 
+you can ignore lint or ignore file by override [ignoreLint] and [ignoreFile].
 Here is a demo for a dart lint:
 
 ``` dart
@@ -649,6 +651,18 @@ Should call `super.dispose()` at the end of this method.
 class EndCallSuperDispose extends DartLint with CallSuperDisposeMixin {
   @override
   String get code => 'end_call_super_dispose';
+}
+```
+
+### PerferDocComments
+
+https://dart.dev/guides/language/effective-dart/documentation
+The same like `public_member_api_docs`, but we can ignore lint or ignore file by override [ignoreLint] and [ignoreFile] and you can override [isPrivate] and [inPrivateMember] to check private member.
+
+``` dart
+class PerferDocComments extends DartLint {
+  @override
+  String get code => 'perfer_doc_comments';
 }
 ```
 

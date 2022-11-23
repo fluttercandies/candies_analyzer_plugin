@@ -234,6 +234,9 @@ abstract class DartLint extends CandyLint {
             .isEmpty) {
       final SyntacticEntity? syntacticEntity = matchLint(node);
       if (syntacticEntity != null) {
+        if (ignoreLint(syntacticEntity, node)) {
+          return false;
+        }
         _astNodes[syntacticEntity] = node;
         return true;
       }
@@ -241,5 +244,33 @@ abstract class DartLint extends CandyLint {
     return false;
   }
 
+  /// call this if [DartLint].astVisitor is null
+  /// and use [CandiesAnalyzerPlugin].astVisitor [CandiesLintsAstVisitor]
   SyntacticEntity? matchLint(AstNode node);
+
+  /// report lint if you use  [DartLint].astVisitor
+  void reportLint(SyntacticEntity offset, AstNode node) {
+    if (!_astNodes.containsKey(node) &&
+        _astNodes.keys
+            .where(
+              (SyntacticEntity element) =>
+                  element.offset == offset.offset &&
+                  element.length == offset.length,
+            )
+            .isEmpty) {
+      if (ignoreLint(offset, node)) {
+        return;
+      }
+      _astNodes[offset] = node;
+    }
+  }
+
+  /// if has, do not use use CandiesAnalyzerPlugin.astVisitor [CandiesLintsAstVisitor]
+  AstVisitor<void>? get astVisitor => null;
+
+  /// if you want to ignore this error
+  bool ignoreLint(SyntacticEntity offset, AstNode node) => false;
+
+  /// if you want to ignore analysis this file
+  bool ignoreFile(ResolvedUnitResult result) => false;
 }

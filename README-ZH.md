@@ -8,7 +8,7 @@
 
 帮助快速创建自定义 lint 的插件.
 
-- [candies_analyzer_plugin](#candies_analyzer_plugin)
+- [candies\_analyzer\_plugin](#candies_analyzer_plugin)
   - [描述](#描述)
   - [模版创建](#模版创建)
   - [增添你的 lint](#增添你的-lint)
@@ -33,12 +33,13 @@
     - [PerferSafeSetState](#perfersafesetstate)
     - [MustCallSuperDispose](#mustcallsuperdispose)
     - [EndCallSuperDispose](#endcallsuperdispose)
+    - [PerferDocComments](#perferdoccomments)
   - [Completion](#completion)
     - [Make a custom completion](#make-a-custom-completion)
     - [扩展方法提示](#扩展方法提示)
   - [注意事项](#注意事项)
     - [print lag](#print-lag)
-    - [pubspec.yaml and analysis_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
+    - [pubspec.yaml and analysis\_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
     - [在 vscode 中快速修复只支持 dart 文件.(android studio支持任何文件)](#在-vscode-中快速修复只支持-dart-文件android-studio支持任何文件)
     - [提示自动导入在 vscode 无法完成](#提示自动导入在-vscode-无法完成)
 
@@ -166,6 +167,8 @@ class CustomLintPlugin extends CandiesAnalyzerPlugin {
 | getDartFixes/getYamlFixes/getGenericFixes | 返回快速修复 | getYamlFixes/getGenericFixes 没有效果，保留它以备 dart team 未来某天支持, 查看 [issue](https://github.com/dart-lang/sdk/issues/50306)  | 
 
 #### dart lint
+
+你可以通过重载 [ignoreLint] and [ignoreFile] 方法来忽略某个规则或者某个文件。
 
 下面是一个 dart lint 的例子:
 
@@ -650,6 +653,20 @@ class MustCallSuperDispose extends DartLint with CallSuperDisposeMixin {
 class EndCallSuperDispose extends DartLint with CallSuperDisposeMixin {
   @override
   String get code => 'end_call_super_dispose';
+}
+```
+
+### PerferDocComments
+
+https://dart.dev/guides/language/effective-dart/documentation
+跟 `public_member_api_docs` 一致，但是我们提供了 [ignoreLint] and [ignoreFile] 来过滤结果，你也可以重载
+[isPrivate] and [inPrivateMember] 来检查私有成员。
+
+
+``` dart
+class PerferDocComments extends DartLint {
+  @override
+  String get code => 'perfer_doc_comments';
 }
 ```
 

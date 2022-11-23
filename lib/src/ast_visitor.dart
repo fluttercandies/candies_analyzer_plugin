@@ -23,35 +23,4 @@ mixin AstVisitorBase on AstVisitor<void> {
     }
     return handle;
   }
-
-  Iterable<AnalysisError> getAnalysisErrors({
-    required ResolvedUnitResult result,
-    required CandiesAnalyzerPluginIgnoreInfo ignore,
-    required CandiesAnalyzerPluginConfig? config,
-  }) sync* {
-    for (final DartLint lint in lints) {
-      yield* lint.toDartAnalysisErrors(
-        result: result,
-        ignoreInfo: ignore,
-        config: config,
-      );
-    }
-  }
-
-  Stream<AnalysisErrorFixes> getAnalysisErrorFixes({
-    required EditGetFixesParams parameters,
-  }) async* {
-    for (final DartLint lint in lints) {
-      yield* lint.toDartAnalysisErrorFixesStream(parameters: parameters);
-    }
-  }
-
-  Iterable<DartAnalysisError> clearCacheErrors(String path) sync* {
-    for (final DartLint lint in lints) {
-      final List<DartAnalysisError>? list = lint.clearCacheErrors(path);
-      if (list != null) {
-        yield* list;
-      }
-    }
-  }
 }

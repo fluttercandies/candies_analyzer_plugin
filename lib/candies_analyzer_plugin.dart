@@ -13,7 +13,12 @@ export 'src/error/lints/dart/perfer_class_prefix.dart';
 export 'src/error/lints/dart/prefer_asset_const.dart';
 export 'src/error/lints/dart/prefer_named_routes.dart';
 export 'src/error/lints/dart/prefer_safe_set_state.dart';
+export 'src/error/lints/dart/perfer_doc_comments.dart';
 export 'src/error/lints/generic_lint.dart';
+export 'src/error/lints/dart/util/analyzer.dart';
+export 'src/error/lints/dart/util/ast.dart';
+export 'src/error/lints/dart/util/utils.dart'
+    hide isDartFileName, isPubspecFileName;
 export 'src/extension.dart';
 export 'src/ignore_info.dart';
 export 'src/log.dart';

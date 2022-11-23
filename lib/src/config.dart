@@ -9,7 +9,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/source/error_processor.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_analyzer_plugin/src/error/error/dart.dart';
 import 'package:candies_analyzer_plugin/src/error/lints/dart/dart_lint.dart';
 import 'package:candies_analyzer_plugin/src/error/lints/generic_lint.dart';
 import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
@@ -98,10 +97,12 @@ class CandiesAnalyzerPluginConfig {
         }
       }
 
-      astVisitor._lints = dartLints
-          .where((DartLint lint) =>
-              !disableLints.contains(lint.code.toUpperCase()) && !ignore(lint))
-          .toList();
+      _dartLints.addAll(dartLints.where((DartLint lint) =>
+          !disableLints.contains(lint.code.toUpperCase()) && !ignore(lint)));
+
+      // astVisitor._lints = _dartLints
+      //     .where((DartLint element) => element.astVisitor == null)
+      //     .toList();
 
       yamlLints.removeWhere((YamlLint lint) =>
           disableLints.contains(lint.code.toUpperCase()) || ignore(lint));
@@ -116,6 +117,7 @@ class CandiesAnalyzerPluginConfig {
   final AstVisitorBase astVisitor;
   final List<Glob> _includePatterns = <Glob>[];
   final List<YamlLint> yamlLints;
+  final List<DartLint> _dartLints = <DartLint>[];
   final List<GenericLint> genericLints;
   bool _shouldAnalyze = false;
   bool get shouldAnalyze => _shouldAnalyze;
@@ -160,6 +162,40 @@ class CandiesAnalyzerPluginConfig {
 
   bool isYamlFile(String file) => file.endsWith('.yaml');
 
+  Iterable<AnalysisError> getDartErrorsFromResult({
+    required ResolvedUnitResult result,
+  }) sync* {
+    final Iterable<DartLint> dartLints =
+        _dartLints.where((DartLint dartLint) => !dartLint.ignoreFile(result));
+    if (dartLints.isEmpty) {
+      return;
+    }
+
+    // use CandiesAnalyzerPlugin.astVisitor [CandiesLintsAstVisitor]
+    final List<DartLint> dartLints1 = dartLints
+        .where((DartLint element) => element.astVisitor == null)
+        .toList();
+
+    if (dartLints1.isNotEmpty) {
+      astVisitor._lints = dartLints1;
+      result.unit.visitChildren(astVisitor);
+    }
+
+    final CandiesAnalyzerPluginIgnoreInfo ignore =
+        CandiesAnalyzerPluginIgnoreInfo.forDart(result);
+    for (final DartLint dartLint in dartLints) {
+      // use [DartLint].astVisitor
+      if (dartLint.astVisitor != null) {
+        result.unit.visitChildren(dartLint.astVisitor!);
+      }
+      yield* dartLint.toDartAnalysisErrors(
+        ignoreInfo: ignore,
+        result: result,
+        config: this,
+      );
+    }
+  }
+
   Stream<AnalysisErrorFixes> getAnalysisErrorFixes({
     required EditGetFixesParams parameters,
     required AnalysisContext analysisContext,
@@ -167,7 +203,7 @@ class CandiesAnalyzerPluginConfig {
     final String file = parameters.file;
 
     if (isDartFile(file)) {
-      for (final DartLint lint in astVisitor.lints) {
+      for (final DartLint lint in _dartLints) {
         yield* lint.toDartAnalysisErrorFixesStream(parameters: parameters);
       }
     } else if (isYamlFile(file)) {
@@ -189,7 +225,9 @@ class CandiesAnalyzerPluginConfig {
 
   void clearCacheErrors(String file) {
     if (isDartFile(file)) {
-      astVisitor.clearCacheErrors(file).toList();
+      for (final DartLint dartLint in _dartLints) {
+        dartLint.clearCacheErrors(file);
+      }
     } else if (isYamlFile(file)) {
       for (final YamlLint lint in yamlLints) {
         lint.clearCacheErrors(file);

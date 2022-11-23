@@ -1,3 +1,9 @@
+## 3.1.0
+
+* add `perfer_doc_comments`, it's same like `public_member_api_docs` but we can ignore lint or ignore file by override [ignoreLint] and [ignoreFile] and you can override [isPrivate] and [inPrivateMember] to check private member.
+* add [ignoreLint] and [ignoreFile] methods for [DartLint], override they base on your rule.
+* add [astVisitor] for [DartLint], you can custom astVisitor for one lint.
+
 ## 3.0.0
 
 * rename `candies_lints` to `candies_analyzer_plugin`.

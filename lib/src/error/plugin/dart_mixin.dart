@@ -15,6 +15,7 @@ mixin CandiesDartFileErrorPlugin on ServerPlugin {
         PerferSafeSetState(),
         MustCallSuperDispose(),
         EndCallSuperDispose(),
+        PerferDocComments(),
       ];
 
   Future<Iterable<AnalysisError>> analyzeDartFile({
@@ -25,27 +26,10 @@ mixin CandiesDartFileErrorPlugin on ServerPlugin {
     final SomeResolvedUnitResult unitResult =
         await analysisContext.currentSession.getResolvedUnit(path);
     if (unitResult is ResolvedUnitResult) {
-      return getDartErrorsFromResult(unitResult, config);
+      return config.getDartErrorsFromResult(result: unitResult);
     }
     CandiesAnalyzerPluginLogger().logError('getResolvedUnit failed for $path',
         root: analysisContext.root);
     return <AnalysisError>[];
-  }
-
-  /// Return AnalysisError List base on ResolvedUnitResult.
-  Iterable<AnalysisError> getDartErrorsFromResult(
-    ResolvedUnitResult unitResult,
-    CandiesAnalyzerPluginConfig config,
-  ) {
-    unitResult.unit.visitChildren(config.astVisitor);
-    final CandiesAnalyzerPluginIgnoreInfo ignore =
-        CandiesAnalyzerPluginIgnoreInfo.forDart(unitResult);
-    return config.astVisitor
-        .getAnalysisErrors(
-          result: unitResult,
-          ignore: ignore,
-          config: config,
-        )
-        .toList();
   }
 }
