@@ -285,6 +285,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (!dartLint.isPrivate(node.name2, node)) {
+      check(node);
+    }
+  }
+
   void _visitMembers(Declaration node, Token name, List<ClassMember> members) {
     if (dartLint.isPrivate(name, node)) {
       return;

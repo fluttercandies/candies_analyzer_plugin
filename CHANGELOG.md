@@ -1,3 +1,7 @@
+## 3.1.1
+
+* `perfer_doc_comments` add check FunctionDeclaration
+
 ## 3.1.0
 
 * add `perfer_doc_comments`, it's same like `public_member_api_docs` but we can ignore lint or ignore file by override [ignoreLint] and [ignoreFile] and you can override [isPrivate] and [inPrivateMember] to check private member.

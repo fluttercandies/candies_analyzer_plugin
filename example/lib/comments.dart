@@ -40,10 +40,10 @@ class MyWidget extends StatefulWidget {
   const MyWidget({Key? key, required this.s}) : super(key: key);
   final int s;
   @override
-  State<MyWidget> createState() => _MyWidgetState();
+  State1<MyWidget> createState() => _MyWidgetState();
 }
 
-class _MyWidgetState extends State<MyWidget> {
+class _MyWidgetState extends State1<MyWidget> {
   int i = 0;
   int _j = 0;
   int get j => _j;
@@ -58,6 +58,8 @@ class _MyWidgetState extends State<MyWidget> {
     return Container();
   }
 }
+
+abstract class State1<T extends StatefulWidget> extends State<T> {}
 
 enum Enum {
   test,
@@ -77,3 +79,7 @@ mixin MixinTest {
 
   void test();
 }
+
+void test() {}
+
+typedef TestFucntion = Function();
