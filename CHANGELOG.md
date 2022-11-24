@@ -1,3 +1,7 @@
+## 3.1.2
+
+* `perfer_doc_comments` add method [isValidDocumentationComment]
+
 ## 3.1.1
 
 * `perfer_doc_comments` add check FunctionDeclaration

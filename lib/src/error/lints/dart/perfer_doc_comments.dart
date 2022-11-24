@@ -53,13 +53,18 @@ class PerferDocComments extends DartLint {
   bool isPrivate(Token? name, AstNode parent) {
     return ast.isPrivate(name);
   }
+
+  /// Check whether it's valid comment
+  bool isValidDocumentationComment(Declaration node) =>
+      node.documentationComment != null;
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   _Visitor(this.dartLint);
   final PerferDocComments dartLint;
   SyntacticEntity? check(Declaration node) {
-    if (node.documentationComment == null && !isOverridingMember(node)) {
+    if (!dartLint.isValidDocumentationComment(node) &&
+        !isOverridingMember(node)) {
       final SyntacticEntity errorNode = ast.getNodeToAnnotate(node);
       dartLint.reportLint(errorNode, node);
       return errorNode;

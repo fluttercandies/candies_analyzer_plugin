@@ -1,6 +1,6 @@
 name: candies_analyzer_plugin
 description: The plugin to help create custom analyzer plugin quickly and provide some useful lints and get suggestion and auto import for extension member.
-version: 3.1.1
+version: 3.1.2
 homepage: https://github.com/fluttercandies/candies_analyzer_plugin
 
 environment:
