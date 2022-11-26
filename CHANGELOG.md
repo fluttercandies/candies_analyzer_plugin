@@ -1,3 +1,8 @@
+## 3.2.0
+
+* add [beforeSendAnalysisErrors] method for [CandiesAnalyzerPlugin], you can edit AnalysisError before to be send.
+* add [showAnalysisErrorWithGitAuthor] property for [CandiesAnalyzerPlugin], support to add git author into error message.
+
 ## 3.1.2
 
 * `perfer_doc_comments` add method [isValidDocumentationComment]

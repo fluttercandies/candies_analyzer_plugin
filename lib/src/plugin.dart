@@ -30,20 +30,19 @@ import 'package:candies_analyzer_plugin/src/error/plugin/yaml_mixin.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:analyzer/src/util/glob.dart';
 
+part 'plugin_base.dart';
+
 class CandiesAnalyzerPlugin extends ServerPlugin
     with
         CandiesDartFileErrorPlugin,
         CandiesYamlFileErrorPlugin,
         CandiesGenericFileErrorPlugin,
-        CandiesCompletionPlugin {
+        CandiesCompletionPlugin,
+        CandiesAnalyzerPluginBase {
   CandiesAnalyzerPlugin()
       : super(resourceProvider: PhysicalResourceProvider.INSTANCE) {
     CandiesAnalyzerPluginLogger().logFileName = logFileName;
   }
-
-  /// The name of log file
-  /// default this.name
-  String get logFileName => name;
 
   /// Return the user visible name of this plugin.
   @override
@@ -65,40 +64,9 @@ class CandiesAnalyzerPlugin extends ServerPlugin
   String get contactInfo =>
       'https://github.com/fluttercandies/candies_analyzer_plugin';
 
+  /// show lint with git author
+
   late AnalysisContextCollection _contextCollection;
-
-  /// The cache of configs
-  final Map<String, CandiesAnalyzerPluginConfig> _configs =
-      <String, CandiesAnalyzerPluginConfig>{};
-
-  List<Glob>? __fileGlobsToAnalyze;
-
-  List<Glob> get _fileGlobsToAnalyze =>
-      __fileGlobsToAnalyze ??= fileGlobsToAnalyze
-          .map((String e) => Glob(path_package.separator, e))
-          .toList();
-
-  /// whether should analyze this file
-  bool shouldAnalyzeFile(
-    String file,
-    AnalysisContext analysisContext,
-  ) {
-    if (file.endsWith('.g.dart')) {
-      return false;
-    }
-
-    final String relative = path_package.relative(
-      file,
-      from: analysisContext.root,
-    );
-
-    for (final Glob pattern in _fileGlobsToAnalyze) {
-      if (pattern.matches(relative)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   /// Handles files that might have been affected by a content change of
   /// one or more files. The implementation may check if these files should
@@ -159,10 +127,16 @@ class CandiesAnalyzerPlugin extends ServerPlugin
 
       final List<AnalysisError> errors =
           (await getAnalysisErrors(config, path, analysisContext)).toList();
-
       CandiesAnalyzerPluginLogger().log(
         'find ${errors.length} errors in $path',
         root: analysisContext.root,
+      );
+
+      await beforeSendAnalysisErrors(
+        errors: errors,
+        analysisContext: analysisContext,
+        path: path,
+        config: config,
       );
       // if errors is empty, we still need to send a notification
       // to clear errors if it has.
@@ -183,6 +157,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
     }
   }
 
+  /// get analysis errors base on file type
   Future<Iterable<AnalysisError>> getAnalysisErrors(
     CandiesAnalyzerPluginConfig config,
     String path,
@@ -209,6 +184,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
     }
   }
 
+  /// debug: get analysis errors
   Future<Iterable<AnalysisError>> getAnalysisErrorsForDebug(
     String path,
     AnalysisContext analysisContext,
@@ -283,17 +259,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
     return EditGetFixesResult(const <AnalysisErrorFixes>[]);
   }
 
-  Stream<AnalysisErrorFixes> getAnalysisErrorFixes(
-    CandiesAnalyzerPluginConfig config,
-    EditGetFixesParams parameters,
-    AnalysisContext context,
-  ) {
-    return config.getAnalysisErrorFixes(
-      parameters: parameters,
-      analysisContext: context,
-    );
-  }
-
+  /// debug: get analysis errors fixes
   Stream<AnalysisErrorFixes> getAnalysisErrorFixesForDebug(
     EditGetFixesParams parameters,
     AnalysisContext analysisContext,

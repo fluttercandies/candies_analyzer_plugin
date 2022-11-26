@@ -49,6 +49,9 @@ class CustomLintPlugin extends CandiesAnalyzerPlugin {
 
   @override
   List<GenericLint> get genericLints => <GenericLint>[RemoveDuplicateValue()];
+
+  @override
+  bool get showAnalysisErrorWithGitAuthor => true;
 }
 
 class PerferCandiesClassPrefix extends DartLint {
