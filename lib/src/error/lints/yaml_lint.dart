@@ -191,6 +191,16 @@ abstract class YamlLint extends CandyLint {
     return _cacheErrorsForFixes.remove(path);
   }
 
+  List<YamlAnalysisError>? getCacheErrors(String path) {
+    return _cacheErrorsForFixes[path];
+  }
+
+  Iterable<YamlAnalysisError> getAllCacheErrors() sync* {
+    for (final List<YamlAnalysisError> errors in _cacheErrorsForFixes.values) {
+      yield* errors;
+    }
+  }
+
   Iterable<SourceRange> matchLint(
     YamlNode root,
     String content,

@@ -21,6 +21,9 @@ import 'package:yaml/yaml.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/src/util/glob.dart';
 import 'package:analyzer/src/util/file_paths.dart' as file_paths;
+
+import 'error/lints/dart/unused_file.dart';
+import 'log.dart';
 part 'ast_visitor.dart';
 
 /// The class to handle pubspec.yaml and analysis_options.yaml
@@ -119,6 +122,7 @@ class CandiesAnalyzerPluginConfig {
   final List<YamlLint> yamlLints;
   final List<DartLint> _dartLints = <DartLint>[];
   final List<GenericLint> genericLints;
+
   bool _shouldAnalyze = false;
   bool get shouldAnalyze => _shouldAnalyze;
 
@@ -165,11 +169,27 @@ class CandiesAnalyzerPluginConfig {
   Iterable<AnalysisError> getDartErrorsFromResult({
     required ResolvedUnitResult result,
   }) sync* {
-    final Iterable<DartLint> dartLints =
-        _dartLints.where((DartLint dartLint) => !dartLint.ignoreFile(result));
+    final CandiesAnalyzerPluginIgnoreInfo ignore =
+        CandiesAnalyzerPluginIgnoreInfo.forDart(result);
+    final Iterable<DartLint> dartLints = _dartLints.where((DartLint dartLint) {
+      final bool shouldAnalyze =
+          !dartLint.ignoreFile(result) && !ignore.ignored(dartLint.code);
+
+      if (!shouldAnalyze && dartLint is UnusedFile) {
+        // add this into used file
+
+        return true;
+      }
+      return shouldAnalyze;
+    });
     if (dartLints.isEmpty) {
       return;
     }
+
+    CandiesAnalyzerPluginLogger().log(
+      'begin analyze file: ${result.path}}',
+      root: result.root,
+    );
 
     // use CandiesAnalyzerPlugin.astVisitor [CandiesLintsAstVisitor]
     final List<DartLint> dartLints1 = dartLints
@@ -178,16 +198,13 @@ class CandiesAnalyzerPluginConfig {
 
     if (dartLints1.isNotEmpty) {
       astVisitor._lints = dartLints1;
-      result.unit.visitChildren(astVisitor);
+      result.unit.accept(astVisitor);
     }
 
-    final CandiesAnalyzerPluginIgnoreInfo ignore =
-        CandiesAnalyzerPluginIgnoreInfo.forDart(result);
     for (final DartLint dartLint in dartLints) {
       // use [DartLint].astVisitor
-      if (dartLint.astVisitor != null) {
-        result.unit.visitChildren(dartLint.astVisitor!);
-      }
+      dartLint.accept(result, ignore);
+
       yield* dartLint.toDartAnalysisErrors(
         ignoreInfo: ignore,
         result: result,
@@ -204,7 +221,10 @@ class CandiesAnalyzerPluginConfig {
 
     if (isDartFile(file)) {
       for (final DartLint lint in _dartLints) {
-        yield* lint.toDartAnalysisErrorFixesStream(parameters: parameters);
+        yield* lint.toDartAnalysisErrorFixesStream(
+          parameters: parameters,
+          analysisContext: analysisContext,
+        );
       }
     } else if (isYamlFile(file)) {
       for (final YamlLint lint in yamlLints) {
@@ -237,5 +257,51 @@ class CandiesAnalyzerPluginConfig {
         lint.clearCacheErrors(file);
       }
     }
+  }
+
+  Iterable<AnalysisError> getAllCacheErrors() sync* {
+    for (final DartLint dartLint in _dartLints) {
+      yield* dartLint.getAllCacheErrors();
+    }
+
+    for (final YamlLint lint in yamlLints) {
+      yield* lint.getAllCacheErrors();
+    }
+
+    for (final GenericLint lint in genericLints) {
+      yield* lint.getAllCacheErrors();
+    }
+  }
+
+  Iterable<AnalysisError> getCacheErrors(String path) sync* {
+    for (final DartLint dartLint in _dartLints) {
+      final List<AnalysisError>? errors = dartLint.getCacheErrors(path);
+      if (errors != null) {
+        yield* errors;
+      }
+    }
+
+    for (final YamlLint lint in yamlLints) {
+      final List<AnalysisError>? errors = lint.getCacheErrors(path);
+      if (errors != null) {
+        yield* errors;
+      }
+    }
+
+    for (final GenericLint lint in genericLints) {
+      final List<AnalysisError>? errors = lint.getCacheErrors(path);
+      if (errors != null) {
+        yield* errors;
+      }
+    }
+  }
+
+  UnusedFile? get unusedFile {
+    for (final DartLint dartLint in _dartLints) {
+      if (dartLint is UnusedFile) {
+        return dartLint;
+      }
+    }
+    return null;
   }
 }

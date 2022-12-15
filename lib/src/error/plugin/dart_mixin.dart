@@ -1,4 +1,6 @@
 import 'package:analyzer/dart/analysis/analysis_context.dart';
+// ignore: unused_import
+import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer_plugin/plugin/plugin.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
@@ -16,6 +18,7 @@ mixin CandiesDartFileErrorPlugin on ServerPlugin {
         MustCallSuperDispose(),
         EndCallSuperDispose(),
         PerferDocComments(),
+        UnusedFile(),
       ];
 
   Future<Iterable<AnalysisError>> analyzeDartFile({

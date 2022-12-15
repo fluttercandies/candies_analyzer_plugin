@@ -1,5 +1,7 @@
 // ignore_for_file: implementation_imports
+import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
+import 'package:candies_analyzer_plugin/src/plugin.dart';
 
 /// The lint base
 abstract class CandyLint {
@@ -25,7 +27,8 @@ abstract class CandyLint {
   String get code;
 
   /// The URL of a page containing documentation associated with this error.
-  String? get url => null;
+  String? get url =>
+      'https://github.com/fluttercandies/candies_analyzer_plugin';
 
   /// Additional messages associated with this diagnostic that provide context
   /// to help the user understand the diagnostic.
@@ -41,4 +44,9 @@ abstract class CandyLint {
   /// flag set they can proceed with the confidence that there are in fact
   /// associated fixes.
   //bool? get hasFix => false;
+}
+
+mixin AnalyzeErrorAfterFilesAnalyzed on CandyLint {
+  Future<void> handleError(CandiesAnalyzerPlugin plugin,
+      {AnalysisContext? analysisContext});
 }

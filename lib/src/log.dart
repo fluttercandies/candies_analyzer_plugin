@@ -18,9 +18,6 @@ class CandiesAnalyzerPluginLogger {
   /// whether should log
   bool shouldLog = false;
   void _init(String root) {
-    if (!shouldLog) {
-      return;
-    }
     if (!_loggers.containsKey(root)) {
       _loggers[root] = Logger(
           filter: _Filter(),
@@ -46,8 +43,9 @@ class CandiesAnalyzerPluginLogger {
     required String root,
     dynamic error,
     StackTrace? stackTrace,
+    bool forceLog = false,
   }) {
-    if (!shouldLog) {
+    if (!shouldLog && !forceLog) {
       return;
     }
     _init(root);
@@ -60,8 +58,9 @@ class CandiesAnalyzerPluginLogger {
     required String root,
     dynamic error,
     StackTrace? stackTrace,
+    bool forceLog = false,
   }) {
-    if (!shouldLog) {
+    if (!shouldLog && !forceLog) {
       return;
     }
     _init(root);

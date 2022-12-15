@@ -12,7 +12,7 @@ mixin CandiesAnalyzerPluginBase on ServerPlugin {
   /// The cache of configs
   final Map<String, CandiesAnalyzerPluginConfig> _configs =
       <String, CandiesAnalyzerPluginConfig>{};
-
+  Map<String, CandiesAnalyzerPluginConfig> get configs => _configs;
   List<Glob>? __fileGlobsToAnalyze;
 
   List<Glob> get _fileGlobsToAnalyze =>
@@ -109,5 +109,13 @@ mixin CandiesAnalyzerPluginBase on ServerPlugin {
         }
       }
     }
+  }
+
+  Map<T, List<S>> groupBy<S, T>(Iterable<S> values, T Function(S) key) {
+    final Map<T, List<S>> map = <T, List<S>>{};
+    for (final S element in values) {
+      (map[key(element)] ??= <S>[]).add(element);
+    }
+    return map;
   }
 }

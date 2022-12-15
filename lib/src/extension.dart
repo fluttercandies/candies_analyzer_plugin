@@ -1,12 +1,16 @@
+import 'dart:io';
+
 import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/source/error_processor.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
+import 'package:path/path.dart' as path;
 
 /// The extension for ResolvedUnitResult
 extension ResolvedUnitResultE on ResolvedUnitResult {
@@ -21,6 +25,54 @@ extension ResolvedUnitResultE on ResolvedUnitResult {
 extension AnalysisContextE on AnalysisContext {
   /// Return root path
   String get root => contextRoot.root.path;
+
+  Future<String> get getSdkRoot async {
+    if (this.sdkRoot != null) {
+      return this.sdkRoot!.path;
+    }
+    final SomeLibraryElementResult coreSource =
+        await currentSession.getLibraryByUri('dart:core');
+    late String sdkRoot;
+    final path.Context pathContext =
+        currentSession.resourceProvider.pathContext;
+    if (coreSource is LibraryElementResult) {
+      // "flutter/3.0.0/bin/cache/pkg/sky_engine/lib/core/core.dart"
+      sdkRoot = coreSource.element.source.fullName;
+
+      while (pathContext.basename(sdkRoot) != 'lib') {
+        final String parent = pathContext.dirname(sdkRoot);
+        if (parent == sdkRoot) {
+          break;
+        }
+        sdkRoot = parent;
+      }
+    } else {
+      // flutter/3.0.0/bin/cache/dart-sdk
+      sdkRoot = path.dirname(path.dirname(Platform.resolvedExecutable));
+    }
+    return sdkRoot;
+  }
+
+  Future<String?> get flutterSdkRoot async {
+    final String sdk = await getSdkRoot;
+    final path.Context pathContext =
+        currentSession.resourceProvider.pathContext;
+    final String tag = pathContext.join(
+      'bin',
+      'cache',
+    );
+    // flutter/3.0.0/
+    // dart sdk in flutter
+    if (sdk.contains(tag)) {
+      //
+      return sdk.substring(
+        0,
+        sdk.indexOf(tag),
+      );
+    }
+
+    return null;
+  }
 }
 
 /// The extension for DartFileEditBuilder
@@ -34,7 +86,7 @@ extension ErrorProcessorE on ErrorProcessor {
   bool get filtered => severity == null;
 
   bool ignore(CandyLint lint) {
-    return same(lint) && filtered;
+    return filtered && same(lint);
   }
 
   AnalysisErrorSeverity getSeverity(CandyLint lint) {
@@ -53,4 +105,16 @@ extension ErrorProcessorE on ErrorProcessor {
   }
 
   bool same(CandyLint lint) => lint.code.toUpperCase() == code;
+}
+
+extension LibraryElementE on LibraryElement {
+  bool get isInFlutterSdk {
+    final Uri uri = definingCompilationUnit.source.uri;
+    if (uri.scheme == 'package') {
+      if (uri.pathSegments.isNotEmpty) {
+        return uri.pathSegments.first == 'flutter';
+      }
+    }
+    return false;
+  }
 }

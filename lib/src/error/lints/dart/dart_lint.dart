@@ -1,5 +1,6 @@
 // ignore_for_file: implementation_imports
 
+import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
@@ -17,6 +18,9 @@ import 'package:candies_analyzer_plugin/src/config.dart';
 
 /// The dart lint base
 abstract class DartLint extends CandyLint {
+  bool get addIgnoreForThisLineFix => true;
+  bool get addIgnoreForThisFileFix => true;
+
   Iterable<DartAnalysisError> toDartAnalysisErrors({
     required ResolvedUnitResult result,
     required CandiesAnalyzerPluginIgnoreInfo ignoreInfo,
@@ -24,15 +28,13 @@ abstract class DartLint extends CandyLint {
   }) sync* {
     final Map<SyntacticEntity, AstNode> copy = <SyntacticEntity, AstNode>{};
     copy.addAll(_astNodes);
-    if (copy.isNotEmpty) {
-      CandiesAnalyzerPluginLogger().log(
-        'find ${copy.length} lint($code) at ${result.path}',
-        root: result.root,
-      );
-    }
     _astNodes.clear();
     final List<DartAnalysisError> errors = <DartAnalysisError>[];
     _cacheErrorsForFixes[result.path] = errors;
+    CandiesAnalyzerPluginLogger().log(
+      'find ${copy.length} lint($code) at ${result.path}',
+      root: result.root,
+    );
     for (final SyntacticEntity syntacticEntity in copy.keys) {
       final Location location = astNodeToLocation(
         result,
@@ -57,8 +59,10 @@ abstract class DartLint extends CandyLint {
     }
   }
 
-  Stream<AnalysisErrorFixes> toDartAnalysisErrorFixesStream(
-      {required EditGetFixesParams parameters}) async* {
+  Stream<AnalysisErrorFixes> toDartAnalysisErrorFixesStream({
+    required EditGetFixesParams parameters,
+    required AnalysisContext analysisContext,
+  }) async* {
     final List<DartAnalysisError>? errors =
         _cacheErrorsForFixes[parameters.file];
     if (errors != null) {
@@ -79,21 +83,21 @@ abstract class DartLint extends CandyLint {
       error.astNode,
     );
 
-    fixes.add(
-      await ignoreForThisLine(
+    if (addIgnoreForThisLineFix) {
+      fixes.add(await ignoreForThisLine(
         resolvedUnitResult: error.result,
         ignore: error.ignoreInfo,
         code: code,
         location: error.location,
-      ),
-    );
+      ));
+    }
 
-    fixes.add(
-      await ignoreForThisFile(
+    if (addIgnoreForThisFileFix) {
+      fixes.add(await ignoreForThisFile(
         resolvedUnitResult: error.result,
         ignore: error.ignoreInfo,
-      ),
-    );
+      ));
+    }
 
     fixes = fixes.reversed.toList();
 
@@ -225,6 +229,16 @@ abstract class DartLint extends CandyLint {
     return _cacheErrorsForFixes.remove(path);
   }
 
+  List<DartAnalysisError>? getCacheErrors(String path) {
+    return _cacheErrorsForFixes[path];
+  }
+
+  Iterable<DartAnalysisError> getAllCacheErrors() sync* {
+    for (final List<DartAnalysisError> errors in _cacheErrorsForFixes.values) {
+      yield* errors;
+    }
+  }
+
   bool analyze(AstNode node) {
     if (!_astNodes.containsKey(node) &&
         _astNodes.keys
@@ -265,6 +279,48 @@ abstract class DartLint extends CandyLint {
     }
   }
 
+  // bool reportError(
+  //   String path,
+  //   DartAnalysisError error, {
+  //   bool insert = false,
+  //   bool remove = false,
+  // }) {
+  //   final List<DartAnalysisError> list =
+  //       _cacheErrorsForFixes.putIfAbsent(path, () => <DartAnalysisError>[]);
+
+  //   remove = remove ||
+  //       ignoreFile(error.result) ||
+  //       error.ignoreInfo.ignoredAt(
+  //         code,
+  //         error.location.startLine,
+  //       );
+
+  //   CandiesAnalyzerPluginLogger().log(
+  //     '${remove ? 'remove' : 'add'} $code: $path',
+  //     root: error.result.root,
+  //   );
+
+  //   if (remove) {
+  //     list.removeWhere((DartAnalysisError element) =>
+  //         element.code == error.code && element.location == error.location);
+  //     return true;
+  //   }
+
+  //   for (final DartAnalysisError element in list) {
+  //     // same error
+  //     if (element.code == error.code && element.location == error.location) {
+  //       return false;
+  //     }
+  //   }
+
+  //   if (insert) {
+  //     list.insert(0, error);
+  //   } else {
+  //     list.add(error);
+  //   }
+  //   return false;
+  // }
+
   /// if has, do not use use CandiesAnalyzerPlugin.astVisitor [CandiesLintsAstVisitor]
   AstVisitor<void>? get astVisitor => null;
 
@@ -273,4 +329,12 @@ abstract class DartLint extends CandyLint {
 
   /// if you want to ignore analysis this file
   bool ignoreFile(ResolvedUnitResult result) => false;
+
+  void accept(
+      ResolvedUnitResult result, CandiesAnalyzerPluginIgnoreInfo ignoreInfo) {
+    final AstVisitor<void>? _astVisitor = astVisitor;
+    if (_astVisitor != null) {
+      result.unit.accept(_astVisitor);
+    }
+  }
 }

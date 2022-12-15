@@ -29,6 +29,7 @@ import 'package:candies_analyzer_plugin/src/error/plugin/generic_mixin.dart';
 import 'package:candies_analyzer_plugin/src/error/plugin/yaml_mixin.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:analyzer/src/util/glob.dart';
+import 'dart:collection';
 
 part 'plugin_base.dart';
 
@@ -67,6 +68,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
   /// show lint with git author
 
   late AnalysisContextCollection _contextCollection;
+  AnalysisContextCollection get contextCollection => _contextCollection;
 
   /// Handles files that might have been affected by a content change of
   /// one or more files. The implementation may check if these files should
@@ -76,18 +78,66 @@ class CandiesAnalyzerPlugin extends ServerPlugin
   /// this [analysisContext].
   @override
   Future<void> handleAffectedFiles(
-      {required AnalysisContext analysisContext, required List<String> paths}) {
+      {required AnalysisContext analysisContext,
+      required List<String> paths}) async {
+    // if (analyzedPaths.isNotEmpty) {
+    //   UnusedFile.analyzedDartFiles.removeAll(paths);
+    // }
+
     final List<String> analyzedPaths = paths
         .where(analysisContext.contextRoot.isAnalyzed)
         .toList(growable: false);
     if (analyzedPaths.isNotEmpty) {
       CandiesAnalyzerPluginLogger().log(
-        'The files are changed: ${analyzedPaths.join('\n')}',
+        'The files are changed:   \n${analyzedPaths.join('\n')}',
         root: analysisContext.root,
+        forceLog: true,
       );
     }
-    return super
-        .handleAffectedFiles(analysisContext: analysisContext, paths: paths);
+    await analyzeFiles(
+      analysisContext: analysisContext,
+      paths: analyzedPaths,
+    );
+    // await super.handleAffectedFiles(
+    //   analysisContext: analysisContext,
+    //   paths: paths,
+    // );
+
+    if (analyzedPaths.isNotEmpty) {
+      await afterFilesAnalyzed(analysisContext: analysisContext);
+    }
+  }
+
+  @override
+  Future<void> analyzeFiles({
+    required AnalysisContext analysisContext,
+    required List<String> paths,
+  }) async {
+    final Set<String> pathSet = paths.toSet();
+    if (pathSet.isNotEmpty) {
+      CandiesAnalyzerPluginLogger().log(
+        'analyzeFiles: \n${paths.join('\n')}',
+        root: analysisContext.root,
+        forceLog: true,
+      );
+    }
+
+    // First analyze priority files.
+    for (final String path in priorityPaths) {
+      pathSet.remove(path);
+      await analyzeFile(
+        analysisContext: analysisContext,
+        path: path,
+      );
+    }
+
+    // Then analyze the remaining files.
+    for (final String path in pathSet) {
+      await analyzeFile(
+        analysisContext: analysisContext,
+        path: path,
+      );
+    }
   }
 
   /// Analyzes the given files.
@@ -111,6 +161,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
           analysisContext: analysisContext, path: path);
     }
     if (config == null || !config.shouldAnalyze || !config.include(path)) {
+      UnusedFile.remove(path);
       config?.clearCacheErrors(path);
       // send a notification that we ignore the errors in this file.
       channel.sendNotification(
@@ -123,6 +174,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
       CandiesAnalyzerPluginLogger().log(
         'analyze file: $path',
         root: analysisContext.root,
+        forceLog: true,
       );
 
       final List<AnalysisError> errors =
@@ -132,17 +184,23 @@ class CandiesAnalyzerPlugin extends ServerPlugin
         root: analysisContext.root,
       );
 
+      // if errors is empty, we still need to send a notification
+      // to clear errors if it has.
+      // send notification after afterNewContextCollection and handleAffectedFiles
+      //
+      // send later
+      // if (config.unusedFile == null) {
       await beforeSendAnalysisErrors(
         errors: errors,
         analysisContext: analysisContext,
         path: path,
         config: config,
       );
-      // if errors is empty, we still need to send a notification
-      // to clear errors if it has.
       channel.sendNotification(
         AnalysisErrorsParams(path, errors).toNotification(),
       );
+
+      // }
     } on Exception catch (e, stackTrace) {
       CandiesAnalyzerPluginLogger().logError(
         'analyze file failed!',
@@ -289,6 +347,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
     required AnalysisContextCollection contextCollection,
   }) async {
     _contextCollection = contextCollection;
+
     for (final AnalysisContext analysisContext in contextCollection.contexts) {
       final CandiesAnalyzerPluginConfig config = CandiesAnalyzerPluginConfig(
         context: analysisContext,
@@ -308,6 +367,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
       }
     }
     await super.afterNewContextCollection(contextCollection: contextCollection);
+    await afterFilesAnalyzed();
   }
 
   @override
@@ -316,5 +376,47 @@ class CandiesAnalyzerPlugin extends ServerPlugin
     for (final AnalysisContext context in contextCollection.contexts) {
       _configs.remove(context.root);
     }
+    //UnusedFile.unUsedDartFiles.clear();
+    await super
+        .beforeContextCollectionDispose(contextCollection: contextCollection);
+  }
+
+  Timer? _debounce;
+  Future<void> afterFilesAnalyzed({AnalysisContext? analysisContext}) async {
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
+    _debounce = Timer(const Duration(seconds: 1), () async {
+      for (final DartLint dartLint in dartLints) {
+        if (dartLint is AnalyzeErrorAfterFilesAnalyzed) {
+          await (dartLint as AnalyzeErrorAfterFilesAnalyzed)
+              .handleError(this, analysisContext: analysisContext);
+        }
+      }
+    });
+
+    // for (final DartLint dartLint in dartLints) {
+    //   if (dartLint is AnalyzeErrorAfterFilesAnalyzed) {
+    //     await (dartLint as AnalyzeErrorAfterFilesAnalyzed).handleError(
+    //       this,
+    //       analysisContext: analysisContext,
+    //     );
+    //   }
+    // }
+  }
+
+  @override
+  Future<AnalysisHandleWatchEventsResult> handleAnalysisHandleWatchEvents(
+      AnalysisHandleWatchEventsParams parameters) async {
+    for (final WatchEvent event in parameters.events) {
+      switch (event.type) {
+        case WatchEventType.REMOVE:
+          UnusedFile.remove(event.path);
+          break;
+        default:
+          break;
+      }
+    }
+    return await super.handleAnalysisHandleWatchEvents(parameters);
   }
 }

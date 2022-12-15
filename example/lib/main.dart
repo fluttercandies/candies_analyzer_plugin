@@ -4,13 +4,20 @@
 //import 'package:example/extension/int.dart';
 
 import 'package:flutter/material.dart';
+//import 'comments.dart' as comments;
 //import 'dart:async';
 
 // import 'package:time/time.dart';
 // import 'package:dartx/dartx.dart';
 
+//import 'package:flutter_package/flutter_package.dart';
+import 'package:flutter_package/flutter_package.dart' as flutter_package;
+//import 'package:flutter_package/extension/int.dart';
+
 void main() {
   int i = 1;
+  //i.f(1);
+  flutter_package.TestApi.common.aaa();
 
   List<int> list = <int>[];
 
@@ -23,6 +30,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    // return const comments.MyWidget(
+    //   s: 1,
+    // );
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(

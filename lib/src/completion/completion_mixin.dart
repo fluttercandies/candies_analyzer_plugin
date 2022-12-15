@@ -37,7 +37,9 @@ mixin CandiesCompletionPlugin on ServerPlugin {
     for (final ExtensionElement accessibleExtension
         in result.libraryElement.accessibleExtensions) {
       // skip dart.core
-      if (accessibleExtension.library.name == 'dart.core') {
+      if (
+          //accessibleExtension.library.name == 'dart.core' &&
+          accessibleExtension.library.isDartCore) {
         continue;
       }
 

@@ -192,6 +192,17 @@ abstract class GenericLint extends CandyLint {
     return _cacheErrorsForFixes.remove(path);
   }
 
+  List<GenericAnalysisError>? getCacheErrors(String path) {
+    return _cacheErrorsForFixes[path];
+  }
+
+  Iterable<GenericAnalysisError> getAllCacheErrors() sync* {
+    for (final List<GenericAnalysisError> errors
+        in _cacheErrorsForFixes.values) {
+      yield* errors;
+    }
+  }
+
   Iterable<SourceRange> matchLint(
     String content,
     String file,
