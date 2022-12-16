@@ -1,3 +1,7 @@
+## 3.3.0
+
+* add unused_file
+  
 ## 3.2.0
 
 * add [beforeSendAnalysisErrors] method for [CandiesAnalyzerPlugin], you can edit AnalysisError before to be send.
