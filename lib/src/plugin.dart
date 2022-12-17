@@ -91,7 +91,6 @@ class CandiesAnalyzerPlugin extends ServerPlugin
       CandiesAnalyzerPluginLogger().log(
         'The files are changed:   \n${analyzedPaths.join('\n')}',
         root: analysisContext.root,
-        forceLog: true,
       );
     }
     await analyzeFiles(
@@ -118,7 +117,6 @@ class CandiesAnalyzerPlugin extends ServerPlugin
       CandiesAnalyzerPluginLogger().log(
         'analyzeFiles: \n${paths.join('\n')}',
         root: analysisContext.root,
-        forceLog: true,
       );
     }
 
@@ -174,7 +172,6 @@ class CandiesAnalyzerPlugin extends ServerPlugin
       CandiesAnalyzerPluginLogger().log(
         'analyze file: $path',
         root: analysisContext.root,
-        forceLog: true,
       );
 
       final List<AnalysisError> errors =

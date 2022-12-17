@@ -10,13 +10,13 @@ import 'package:flutter/material.dart';
 // import 'package:time/time.dart';
 // import 'package:dartx/dartx.dart';
 
-//import 'package:flutter_package/flutter_package.dart';
+import 'package:flutter_package/flutter_package.dart';
 import 'package:flutter_package/flutter_package.dart' as flutter_package;
 //import 'package:flutter_package/extension/int.dart';
 
 void main() {
   int i = 1;
-  //i.f(1);
+  i.f(1);
   flutter_package.TestApi.common.aaa();
 
   List<int> list = <int>[];

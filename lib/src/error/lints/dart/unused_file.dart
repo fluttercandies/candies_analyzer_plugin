@@ -34,8 +34,6 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
   static final Map<String, Set<String>> _usedDartFiles =
       <String, Set<String>>{};
 
-  //static final Set<String> analyzedDartFiles = <String>{};
-
   static final Set<String> _unUsedDartFiles = <String>{};
 
   static void remove(String file) {
@@ -43,7 +41,7 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
     _unUsedDartFiles.remove(file);
   }
 
-  /// whether import it means it's used
+  /// whether import means it's used
   bool get importIsUsed => false;
 
   @override
@@ -71,7 +69,6 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
       CandiesAnalyzerPluginLogger().log(
         'unused file is ignore: ${result.path}}',
         root: result.root,
-        forceLog: true,
       );
       usedImportedFiles.add(filePath);
     }
@@ -123,7 +120,7 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
 
     for (final ImportDirective element in usedImports) {
       final LibraryElement? library = element.element2?.importedLibrary;
-      if (library != null && (!library.isInSdk && library.isInFlutterSdk)) {
+      if (library != null && (!library.isInSdk && !library.isInFlutterSdk)) {
         final String? fullName = library.source.fullName;
         if (fullName != null) {
           usedImportedFiles.add(fullName);
@@ -219,7 +216,6 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
       CandiesAnalyzerPluginLogger().log(
         '${remove ? 'remove' : 'add'} unusedFile: $file',
         root: config.context.root,
-        forceLog: true,
       );
 
       final List<protocol_common.AnalysisError> errors =
@@ -266,9 +262,8 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
             parameters.offset <=
                 error.location.offset + error.location.length) {
           CandiesAnalyzerPluginLogger().log(
-            '测试一下 获取修复: ${parameters.file}',
+            'unused_file get fix: ${parameters.file}',
             root: analysisContext.root,
-            forceLog: true,
           );
           yield await toAnalysisErrorFixes(error: error);
         }

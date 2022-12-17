@@ -18,7 +18,7 @@ CandiesAnalyzerPlugin get plugin => CustomLintPlugin();
 // This file must be 'plugin.dart'
 void main(List<String> args, SendPort sendPort) {
   // for performance, default is false, if you want to check log, set it to true.
-  CandiesAnalyzerPluginLogger().shouldLog = false;
+  CandiesAnalyzerPluginLogger().shouldLog = true;
   CandiesAnalyzerPluginStarter.start(
     args,
     sendPort,
@@ -33,26 +33,25 @@ class CustomLintPlugin extends CandiesAnalyzerPlugin {
   @override
   List<String> get fileGlobsToAnalyze => const <String>[
         '**/*.dart',
-        // '**/*.yaml',
-        // '**/*.json',
+        '**/*.yaml',
+        '**/*.json',
       ];
 
   @override
   List<DartLint> get dartLints => <DartLint>[
         // add your dart lint here
-        ///PerferCandiesClassPrefix(),
-        //...super.dartLints,
-        UnusedFile(),
+        PerferCandiesClassPrefix(),
+        ...super.dartLints,
       ];
 
   @override
-  //List<YamlLint> get yamlLints => <YamlLint>[RemoveDependency(package: 'path')];
+  List<YamlLint> get yamlLints => <YamlLint>[RemoveDependency(package: 'path')];
 
   @override
-  // List<GenericLint> get genericLints => <GenericLint>[RemoveDuplicateValue()];
+  List<GenericLint> get genericLints => <GenericLint>[RemoveDuplicateValue()];
 
   @override
-  bool get showAnalysisErrorWithGitAuthor => false;
+  bool get showAnalysisErrorWithGitAuthor => true;
 }
 
 class PerferCandiesClassPrefix extends DartLint {
