@@ -13,11 +13,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_package/flutter_package.dart';
 import 'package:flutter_package/flutter_package.dart' as flutter_package;
 //import 'package:flutter_package/extension/int.dart';
+import 'test.dart' as test;
 
 void main() {
   int i = 1;
   i.f(1);
   flutter_package.TestApi.common.aaa();
+  test.Test test1 = test.Test();
 
   List<int> list = <int>[];
 

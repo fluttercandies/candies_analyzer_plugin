@@ -65,7 +65,7 @@ class UnusedFile extends DartLint with AnalyzeErrorAfterFilesAnalyzed {
     final Set<String> usedImportedFiles = <String>{};
     _usedDartFiles[filePath] = usedImportedFiles;
 
-    if (ignoreInfo.ignored(code)) {
+    if (ignoreInfo.ignored(code) || result.isPart) {
       CandiesAnalyzerPluginLogger().log(
         'unused file is ignore: ${result.path}}',
         root: result.root,

@@ -118,6 +118,7 @@ abstract class DartLint extends CandyLint {
   Future<SourceChange> ignoreForThisFile({
     required ResolvedUnitResult resolvedUnitResult,
     required CandiesAnalyzerPluginIgnoreInfo ignore,
+    bool formatAll = true,
   }) {
     return getDartFix(
       resolvedUnitResult: resolvedUnitResult,
@@ -126,6 +127,7 @@ abstract class DartLint extends CandyLint {
         ignore.fixIgnoreForThisFile(
           code,
           dartFileEditBuilder: dartFileEditBuilder,
+          formatAll: formatAll,
         );
       },
     );
@@ -136,6 +138,7 @@ abstract class DartLint extends CandyLint {
     required CandiesAnalyzerPluginIgnoreInfo ignore,
     required Location location,
     required String code,
+    bool formatAll = true,
   }) {
     return getDartFix(
       resolvedUnitResult: resolvedUnitResult,
@@ -145,6 +148,7 @@ abstract class DartLint extends CandyLint {
           code,
           location,
           dartFileEditBuilder: dartFileEditBuilder,
+          formatAll: formatAll,
         );
       },
     );

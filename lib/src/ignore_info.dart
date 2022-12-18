@@ -6,7 +6,7 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:analyzer/src/ignore_comments/ignore_info.dart';
-import 'extension.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 
 /// The class to help ignore error
 class CandiesAnalyzerPluginIgnoreInfo {
@@ -73,6 +73,7 @@ class CandiesAnalyzerPluginIgnoreInfo {
   void fixIgnoreForThisFile(
     String code, {
     DartFileEditBuilder? dartFileEditBuilder,
+    bool formatAll = true,
   }) {
     if (_ignoreForThisFileMatches.isEmpty) {
       dartFileEditBuilder?.addSimpleInsertion(
@@ -83,7 +84,10 @@ class CandiesAnalyzerPluginIgnoreInfo {
             match.end, '${_ignoreForFileSet.isEmpty ? '' : ','} $code');
       }
     }
-    dartFileEditBuilder?.formatAll(result.unit);
+
+    if (formatAll) {
+      dartFileEditBuilder?.formatAll(result.unit);
+    }
   }
 
   /// The builder of ignore for this line.
@@ -91,6 +95,7 @@ class CandiesAnalyzerPluginIgnoreInfo {
     String code,
     Location location, {
     DartFileEditBuilder? dartFileEditBuilder,
+    bool formatAll = true,
   }) {
     // ide line number
     final int ideLineNumber = location.startLine;
@@ -138,7 +143,8 @@ class CandiesAnalyzerPluginIgnoreInfo {
         '\n$space$fix',
       );
     }
-
-    dartFileEditBuilder?.formatAll(result.unit);
+    if (formatAll) {
+      dartFileEditBuilder?.formatAll(result.unit);
+    }
   }
 }

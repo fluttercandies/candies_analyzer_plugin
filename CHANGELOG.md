@@ -1,3 +1,7 @@
+## 3.3.2
+
+* fix unused_file for part file
+
 ## 3.3.1
 
 * fix unused_file skip import file
