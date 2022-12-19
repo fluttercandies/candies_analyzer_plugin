@@ -3,6 +3,7 @@
 //import 'package:dartx/dartx.dart';
 //import 'package:example/extension/int.dart';
 
+import 'package:example/singleton.dart';
 import 'package:flutter/material.dart';
 //import 'comments.dart' as comments;
 //import 'dart:async';
@@ -19,6 +20,10 @@ void main() {
   int i = 1;
   i.f(1);
   flutter_package.TestApi.common.aaa();
+  Singleton().printInfo();
+  var num = Singleton().num;
+  const Singleton1().printInfo();
+  var num1 = const Singleton1().num;
   test.Test test1 = test.Test();
 
   List<int> list = <int>[];

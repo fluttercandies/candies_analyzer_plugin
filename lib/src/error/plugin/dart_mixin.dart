@@ -18,7 +18,8 @@ mixin CandiesDartFileErrorPlugin on ServerPlugin {
         MustCallSuperDispose(),
         EndCallSuperDispose(),
         PerferDocComments(),
-        UnusedFile(),
+        PreferSingleton(),
+        //UnusedFile(),
       ];
 
   Future<Iterable<AnalysisError>> analyzeDartFile({

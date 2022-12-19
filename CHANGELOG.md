@@ -1,3 +1,7 @@
+## 3.3.3
+
+* add prefer_singleton 
+
 ## 3.3.2
 
 * fix unused_file for part file
