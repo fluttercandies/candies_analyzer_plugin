@@ -1,3 +1,7 @@
+## 3.3.4
+
+* add good_doc_comments 
+
 ## 3.3.3
 
 * add prefer_singleton 

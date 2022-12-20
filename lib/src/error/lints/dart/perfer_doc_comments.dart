@@ -57,6 +57,14 @@ class PerferDocComments extends DartLint {
   /// Check whether it's valid comment
   bool isValidDocumentationComment(Declaration node) =>
       node.documentationComment != null;
+
+  @override
+  bool ignoreLint(SyntacticEntity offset, AstNode node) {
+    if (node is FunctionDeclaration && offset.toString() == 'main') {
+      return true;
+    }
+    return super.ignoreLint(offset, node);
+  }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {

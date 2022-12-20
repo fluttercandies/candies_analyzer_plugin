@@ -1,10 +1,9 @@
 import 'package:analyzer/dart/analysis/analysis_context.dart';
-// ignore: unused_import
-import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer_plugin/plugin/plugin.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
+import 'package:candies_analyzer_plugin/src/error/lints/dart/good_doc_comments.dart';
 
 mixin CandiesDartFileErrorPlugin on ServerPlugin {
   /// AstVisitor to check lint
@@ -20,6 +19,7 @@ mixin CandiesDartFileErrorPlugin on ServerPlugin {
         PerferDocComments(),
         PreferSingleton(),
         //UnusedFile(),
+        GoodDocComments(),
       ];
 
   Future<Iterable<AnalysisError>> analyzeDartFile({

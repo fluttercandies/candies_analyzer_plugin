@@ -24,7 +24,6 @@ class Singleton1 {
   int get num => 1;
 }
 
-
 // class Singleton1 {
 //   Singleton1._();
 //   static final Singleton1 _singleton1 = Singleton1._();
