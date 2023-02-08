@@ -54,6 +54,9 @@ class CustomLintPlugin extends CandiesAnalyzerPlugin {
 
   @override
   bool get showAnalysisErrorWithGitAuthor => false;
+
+  @override
+  bool get cacheErrorsIntoFile => true;
 }
 
 class PerferCandiesClassPrefix extends DartLint {

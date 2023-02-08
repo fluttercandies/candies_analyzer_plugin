@@ -25,7 +25,6 @@ void main() {
   const Singleton1().printInfo();
   var num1 = const Singleton1().num;
   test.Test test1 = test.Test();
-
   List<int> list = <int>[];
 
   runApp(const MyApp());

@@ -13,7 +13,25 @@ Future<void> main(List<String> args) async {
 
   final CandiesAnalyzerPlugin myPlugin = plugin;
   for (final AnalysisContext context in collection.contexts) {
+    final CandiesAnalyzerPluginConfig config = myPlugin.configs.putIfAbsent(
+        context.root,
+        () => CandiesAnalyzerPluginConfig(
+              context: context,
+              pluginName: myPlugin.name,
+              dartLints: myPlugin.dartLints,
+              astVisitor: myPlugin.astVisitor,
+              yamlLints: myPlugin.yamlLints,
+              genericLints: myPlugin.genericLints,
+            ));
+
+    if (!config.shouldAnalyze) {
+      continue;
+    }
     for (final String file in context.contextRoot.analyzedFiles()) {
+      //var errors = await context.currentSession.getErrors(file);
+      if (!config.include(file)) {
+        continue;
+      }
       if (!myPlugin.shouldAnalyzeFile(file, context)) {
         continue;
       }

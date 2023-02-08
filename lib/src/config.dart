@@ -9,21 +9,12 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/source/error_processor.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart';
 import 'package:analyzer_plugin/protocol/protocol_generated.dart';
-import 'package:candies_analyzer_plugin/src/error/lints/dart/dart_lint.dart';
-import 'package:candies_analyzer_plugin/src/error/lints/generic_lint.dart';
-import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
-import 'package:candies_analyzer_plugin/src/error/lints/yaml_lint.dart';
-import 'package:candies_analyzer_plugin/src/extension.dart';
-import 'package:candies_analyzer_plugin/src/ignore_info.dart';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
 import 'package:path/path.dart' as path_context;
-import 'package:pubspec_parse/pubspec_parse.dart';
-import 'package:yaml/yaml.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/src/util/glob.dart';
 import 'package:analyzer/src/util/file_paths.dart' as file_paths;
-
-import 'error/lints/dart/unused_file.dart';
-import 'log.dart';
+import 'package:analyzer/error/error.dart' as error;
 
 part 'ast_visitor.dart';
 
@@ -325,5 +316,54 @@ class CandiesAnalyzerPluginConfig {
       }
     }
     return null;
+  }
+
+  IOSink? _sink;
+
+  Future<void> destroy() async {
+    await _sink?.flush();
+    await _sink?.close();
+    _sink = null;
+  }
+
+  Future<void> cacheErrorsIntoFile(
+    bool cacheErrorsIntoFile, {
+    Iterable<AnalysisError>? errors,
+    List<error.AnalysisError>? officialErrors,
+  }) async {
+    await destroy();
+    final File file = File(path_context.join(
+        context.root, CandiesAnalyzerPluginBase.cacheErrorsFileName));
+    if (!file.existsSync()) {
+      file.createSync();
+    }
+    _sink = file.openWrite(mode: FileMode.writeOnly);
+    if (cacheErrorsIntoFile) {
+      errors ??= getAllCacheErrors();
+      final int count = errors.length + (officialErrors?.length ?? 0);
+      if (count == 0) {
+        _sink?.write('');
+      } else {
+        _sink?.writeln('$count issues found.');
+        // if (officialErrors != null) {
+        //   for (final error.AnalysisError error1 in officialErrors) {
+        //     final LineInfo lineInfo =
+        //         LineInfo.fromContent(error1.source.contents.data);
+        //     final CharacterLocation location =
+        //         lineInfo.getLocation(error1.offset);
+        //     _sink!.writeln(
+        //         '${error1.severity.name.toLowerCase()} • ${path_context.relative(error1.source.fullName, from: context.root)}:${location.lineNumber}:${location.columnNumber} • ${error1.errorCode.problemMessage} • ${error1.errorCode.name}\n');
+        //   }
+        // }
+        for (final AnalysisError error in errors) {
+          _sink!.writeln(
+              '${error.severity.name.toLowerCase()} • ${path_context.relative(error.location.file, from: context.root)}:${error.location.startLine}:${error.location.startColumn} • ${error.message} • ${error.code}\n');
+        }
+      }
+    } else {
+      _sink?.write('');
+    }
+
+    await destroy();
   }
 }

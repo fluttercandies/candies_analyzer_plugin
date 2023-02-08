@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:analyzer/dart/analysis/context_builder.dart';
 import 'package:analyzer/dart/analysis/context_locator.dart';
@@ -144,6 +145,20 @@ class CandiesAnalyzerPlugin extends ServerPlugin
   @override
   Future<void> analyzeFile(
       {required AnalysisContext analysisContext, required String path}) async {
+    // _officialErrors.remove(path);
+    // if (cacheErrorsIntoFile && isDartFileName(path)) {
+    //   final SomeErrorsResult erorsResult =
+    //       await analysisContext.currentSession.getErrors(path);
+    //   if (erorsResult is ErrorsResult) {
+    //     if (erorsResult.errors.isNotEmpty) {
+    //       CandiesAnalyzerPluginLogger().log(
+    //         '发现官方错误: $path',
+    //         root: analysisContext.root,
+    //       );
+    //       _officialErrors[path] = erorsResult.errors;
+    //     }
+    //   }
+    // }
     if (!shouldAnalyzeFile(path, analysisContext)) {
       return;
     }
@@ -360,6 +375,7 @@ class CandiesAnalyzerPlugin extends ServerPlugin
 
       if (config.shouldAnalyze) {
         _configs[analysisContext.root] = config;
+        _rootConfig ??= config;
         CandiesAnalyzerPluginLogger().log(
           'create a new config for ${analysisContext.root}',
           root: analysisContext.root,
@@ -373,15 +389,23 @@ class CandiesAnalyzerPlugin extends ServerPlugin
   @override
   Future<void> beforeContextCollectionDispose(
       {required AnalysisContextCollection contextCollection}) async {
-    for (final AnalysisContext context in contextCollection.contexts) {
-      _configs.remove(context.root);
+    // for (final AnalysisContext context in contextCollection.contexts) {
+    //   _configs.remove(context.root);
+    // }
+    for (final CandiesAnalyzerPluginConfig config in _configs.values) {
+      await config.destroy();
     }
+    _configs.clear();
+    _rootConfig = null;
     //UnusedFile.unUsedDartFiles.clear();
     await super
         .beforeContextCollectionDispose(contextCollection: contextCollection);
   }
 
   Timer? _debounce;
+  CandiesAnalyzerPluginConfig? _rootConfig;
+  // final Map<String, List<error.AnalysisError>> _officialErrors =
+  //     <String, List<error.AnalysisError>>{};
   Future<void> afterFilesAnalyzed({AnalysisContext? analysisContext}) async {
     if (_debounce?.isActive ?? false) {
       _debounce!.cancel();
@@ -393,6 +417,16 @@ class CandiesAnalyzerPlugin extends ServerPlugin
               .handleError(this, analysisContext: analysisContext);
         }
       }
+
+      _rootConfig?.cacheErrorsIntoFile(
+        cacheErrorsIntoFile,
+        errors: getAllCacheErrors(),
+        // officialErrors: <error.AnalysisError>[
+        //   for (final List<error.AnalysisError> element
+        //       in _officialErrors.values)
+        //     ...element
+        // ],
+      );
     });
 
     // for (final DartLint dartLint in dartLints) {

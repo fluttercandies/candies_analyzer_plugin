@@ -1,3 +1,7 @@
+## 4.0.2
+
+* support to cache errors into file.
+
 ## 4.0.1
 
 * make candies_analyzer_plugin as plugin, you can simply use it now.
