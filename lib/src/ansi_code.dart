@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:io/ansi.dart' as ansi;
+
 /// Font color range: 30-37
 /// 30: Black
 /// 31: Red
@@ -7,33 +11,43 @@
 /// 35: Purple
 /// 36: Dark Green
 /// 37: Gray White
-enum AnsiCodeFontColor {
-  /// black
-  black(30),
+enum AnsiCodeForegroundColor {
+  black(ansi.black),
 
-  /// red
-  red(31),
+  red(ansi.red),
 
-  /// green
-  green(32),
+  green(ansi.green),
 
-  /// yellow
-  yellow(33),
+  yellow(ansi.yellow),
 
-  /// red
-  blue(34),
+  blue(ansi.blue),
 
-  /// purple
-  purple(35),
+  magenta(ansi.magenta),
 
-  /// dark green
-  darkGreen(36),
+  cyan(ansi.cyan),
 
-  /// gray white
-  grayWhite(37);
+  lightGray(ansi.lightGray),
 
-  const AnsiCodeFontColor(this.value);
-  final int value;
+  defaultForeground(ansi.defaultForeground),
+
+  darkGray(ansi.darkGray),
+
+  lightRed(ansi.lightRed),
+
+  lightGreen(ansi.lightGreen),
+
+  lightYellow(ansi.lightYellow),
+
+  lightBlue(ansi.lightBlue),
+
+  lightMagenta(ansi.lightMagenta),
+
+  lightCyan(ansi.lightCyan),
+
+  white(ansi.white);
+
+  const AnsiCodeForegroundColor(this.value);
+  final ansi.AnsiCode value;
 }
 
 /// Background color range: 40-47
@@ -46,91 +60,110 @@ enum AnsiCodeFontColor {
 /// 46: Dark Green
 /// 47: Gray White
 enum AnsiCodeBackgroundColor {
-  /// black
-  black(40),
+  black(ansi.backgroundBlack),
 
-  /// red
-  red(41),
+  red(ansi.backgroundRed),
 
-  /// green
-  green(42),
+  green(ansi.backgroundGreen),
 
-  /// yellow
-  yellow(43),
+  yellow(ansi.backgroundYellow),
 
-  /// red
-  blue(44),
+  blue(ansi.backgroundBlue),
 
-  /// purple
-  purple(45),
+  purple(ansi.backgroundMagenta),
 
-  /// dark green
-  darkGreen(46),
+  darkGreen(ansi.backgroundCyan),
 
-  /// gray white
-  grayWhite(47);
+  grayWhite(ansi.backgroundLightGray),
+
+  backgroundDefault(ansi.backgroundDefault),
+
+  gray(ansi.backgroundDarkGray),
+
+  lightRed(ansi.backgroundLightRed),
+
+  lightGreen(ansi.backgroundLightGreen),
+
+  lightYellow(ansi.backgroundLightYellow),
+
+  lightBlue(ansi.backgroundLightBlue),
+
+  lightMagenta(ansi.backgroundLightMagenta),
+
+  lightCyan(ansi.backgroundLightCyan),
+
+  white(ansi.backgroundWhite);
 
   const AnsiCodeBackgroundColor(this.value);
-  final int value;
+  final ansi.AnsiCode value;
 }
 
 /// Effect range: 0-8
 /// 0: No effect
 /// 1: Highlight (darken) display
 /// 2: Low light (weaken) display
+/// 3: italic
 /// 4: Underline
 /// 5: Flicker
 /// 7: Reverse (replace background color and font color)
 /// 8: Hide
-enum AnsiCodeEffect {
+/// 9: crossedOut
+enum AnsiCodeStyle {
   /// no effect
-  noEffect(0),
+  noEffect(ansi.resetAll),
 
   /// highlight (darken) display
-  highlight(1),
+  bold(ansi.styleBold),
 
   /// Lowlight (weaken) display
-  lowlight(2),
+  dim(ansi.styleDim),
+
+  /// italic
+
+  italic(ansi.styleItalic),
 
   /// underline
-  underline(4),
+  underlined(ansi.styleUnderlined),
 
   /// flicker
-  flicker(5),
+  blink(ansi.styleBlink),
 
   /// reverse (replace background color and font color)
-  reverse(7),
+  reverse(ansi.styleReverse),
 
   /// hide
-  hide(8);
+  hidden(ansi.styleHidden),
 
-  const AnsiCodeEffect(this.value);
-  final int value;
+  /// crossedOut
+  crossedOut(ansi.styleCrossedOut);
+
+  const AnsiCodeStyle(this.value);
+  final ansi.AnsiCode value;
 }
 
 extension AnsiCodeE on String {
   String wrapAnsiCode({
-    AnsiCodeFontColor? fontColor,
+    AnsiCodeForegroundColor? foregroundColor,
     AnsiCodeBackgroundColor? backgroundColor,
-    AnsiCodeEffect? consoleEffect,
+    AnsiCodeStyle? style,
   }) {
-    final List<String> infos = <String>[];
-    if (backgroundColor != null) {
-      infos.add('${backgroundColor.value}');
-    }
-    if (fontColor != null) {
-      infos.add('${fontColor.value}');
-    }
-    if (consoleEffect != null) {
-      infos.add('${consoleEffect.value}');
+    // color is not working in pre-commit shell at Windows.
+    if (Platform.isWindows) {
+      return this;
     }
     // echo '\033[43;34;4m abc \033[0m'
     // \033[0m should call end with it, so that no effect the text after it
     // m is end falg
-    if (infos.isNotEmpty) {
-      return '\\033[${infos.join(';')}m$this\\033[0m';
-    }
-
-    return this;
+    return ansi.wrapWith(
+          this,
+          <ansi.AnsiCode>[
+            if (foregroundColor != null) foregroundColor.value,
+            if (backgroundColor != null) backgroundColor.value,
+            if (style != null) style.value,
+          ],
+          // \\033[0m
+          forScript: true,
+        ) ??
+        this;
   }
 }

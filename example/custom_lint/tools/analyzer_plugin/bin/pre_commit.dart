@@ -81,10 +81,10 @@ void _printErrors(List<String> errors, int inMilliseconds) {
     print(errors
         .map((String e) => '  ${e.getHighlightErrorInfo()}')
         .join('\n\n'));
-    print('\n${errors.length} issues found.'.wrapAnsiCode(
-          fontColor: AnsiCodeFontColor.red,
-          consoleEffect: AnsiCodeEffect.highlight,
-        ) +
+    print('\n${errors.length} issues found.'
+            .wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.red) +
         '  ${seconds}s');
+    print('Please fix the errors and then submit the code.'
+        .wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.red));
   }
 }

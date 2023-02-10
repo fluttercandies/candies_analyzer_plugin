@@ -168,27 +168,21 @@ extension ErrorInfoE on String {
         trim().split(separator).map((String e) => e.trim()).toList();
     if (infos.length == 4) {
       infos[1] = infos[1].wrapAnsiCode(
-        fontColor: AnsiCodeFontColor.blue,
-        consoleEffect: AnsiCodeEffect.underline,
+        foregroundColor: AnsiCodeForegroundColor.blue,
+        style: AnsiCodeStyle.underlined,
       );
-      infos[3] = infos[3].wrapAnsiCode(
-        fontColor: AnsiCodeFontColor.green,
-        consoleEffect: AnsiCodeEffect.highlight,
-      );
+      infos[3] =
+          infos[3].wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.green);
 
       String severity = infos[0];
       switch (severity) {
         case 'error':
           severity = severity.wrapAnsiCode(
-            fontColor: AnsiCodeFontColor.red,
-            consoleEffect: AnsiCodeEffect.highlight,
-          );
+              foregroundColor: AnsiCodeForegroundColor.red);
           break;
         case 'warning':
           severity = severity.wrapAnsiCode(
-            fontColor: AnsiCodeFontColor.yellow,
-            consoleEffect: AnsiCodeEffect.highlight,
-          );
+              foregroundColor: AnsiCodeForegroundColor.yellow);
           break;
         case 'info':
           break;

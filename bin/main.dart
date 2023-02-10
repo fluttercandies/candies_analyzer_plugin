@@ -137,7 +137,7 @@ void creatPreCommitSH() {
           )
           .replaceAll('{1}', file.path),
     );
-    if (Platform.isMacOS) {
+    if (Platform.isMacOS || Platform.isLinux) {
       processRun(
         executable: 'chmod',
         arguments: '777 ${preCommitSH.path}',
@@ -603,13 +603,13 @@ Future<void> main(List<String> args) async {
   final List<String> errors = await CandiesAnalyzerPlugin.getCandiesErrorInfos(
     workingDirectory,
     plugin,
-    diff: onlyAnalyzeDiffFiles ? analyzeFiles : null,
+    analyzeFiles: onlyAnalyzeDiffFiles ? analyzeFiles : null,
   );
 
   // get errors from dart analyze command
   errors.addAll(CandiesAnalyzerPlugin.getErrorInfosFromDartAnalyze(
     workingDirectory,
-    diff: onlyAnalyzeDiffFiles ? analyzeFiles : null,
+    analyzeFiles: onlyAnalyzeDiffFiles ? analyzeFiles : null,
   ));
   stopwatch.stop();
 
@@ -625,36 +625,34 @@ void _printErrors(List<String> errors, int inMilliseconds) {
     print(errors
         .map((String e) => '  \${e.getHighlightErrorInfo()}')
         .join('\n\n'));
-    print('\n\${errors.length} issues found.'.wrapAnsiCode(
-          fontColor: AnsiCodeFontColor.red,
-          consoleEffect: AnsiCodeEffect.highlight,
-        ) +
+    print('\n\${errors.length} issues found.'
+            .wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.red) +
         '  \${seconds}s');
+    print('Please fix the errors and then submit the code.'
+        .wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.red));
   }
 }
-
 ''';
 
 const String preCommitSHDemo = '''
 #!/bin/sh
 
-# project path, {0} is placeholder
+# project path
 base_dir="{0}"
 
 dart format "\$base_dir"
 
-# pre_commit.dart path, {1} is placeholder
+# pre_commit.dart path
 pre_commit="{1}"
-errorInfo="Please fix the errors and then submit the code."
-echo "\\033[32;1mChecking the code before submit...\\033[0m"
-echo "\\033[32;1mAnalyzing \$base_dir...\\033[0m"
+ 
+echo "Checking the code before submit..."
+echo "Analyzing \$base_dir..."
 
 info=\$(dart "\$pre_commit" "\$base_dir")
 
 echo "\$info"
 
 if [[ -n \$info && \$info != *"No issues found"* ]];then
-echo "\\033[31;1m\$errorInfo\\033[0m"
 exit 1
 fi
 ''';
