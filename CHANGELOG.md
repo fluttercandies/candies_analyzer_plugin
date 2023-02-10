@@ -1,7 +1,10 @@
-## 4.0.3
+## 5.0.0
 
-* add `create_pre_commit` command to create .git/hooks/pre-commit sh file
-* add `pre_commit.dart` to check errors before git commit.
+* breaking change: use new commands.
+* add `--[no-]pre-commit` to create a pre-commit shell in .git/hook
+* add `--[no-]clear-cache` to clear cache under .dartServer/.plugin_manager/ .
+* add `--example` to create a analyzer_plugin example.
+* add `pre_commit.dart` to check code before commit.
 
 ## 4.0.2
 

@@ -44,6 +44,10 @@ The plugin to help create custom lint quickly.
   - [Completion](#completion)
     - [Make a custom completion](#make-a-custom-completion)
     - [Suggestions of Extension Member](#suggestions-of-extension-member)
+  - [Pre-Commit](#pre-commit)
+    - [pre\_commit.dart](#pre_commitdart)
+    - [pre-commit script](#pre-commit-script)
+    - [cacheErrorsIntoFile](#cacheerrorsintofile)
   - [Note](#note)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis\_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
@@ -105,7 +109,7 @@ more info please check [Default lints](#Default lints)
    
    your lint plugin is `custom_lint`
    
-   run `candies_analyzer_plugin custom_lint`, a simple lint plugin is generated.
+   run `candies_analyzer_plugin --exmaple custom_lint`, a simple lint plugin is generated.
 
 3. add `custom_lint` into `dev_dependencies` of the root `pubspec.yaml`  
 
@@ -476,7 +480,7 @@ windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
 
 if your code is changed, please remove the files under `.plugin_manager`.
 
-or you can run `candies_analyzer_plugin clear_cache` to remove the files under `.plugin_manager`. 
+or you can run `candies_analyzer_plugin --clear-cache` to remove the files under `.plugin_manager`. 
 
 
 1. write new code under custom_lint folder
@@ -764,6 +768,66 @@ you can define your `CompletionContributor` in `completionContributors`, `Extens
 Although dart team had close the issue [Auto import (or quickfix?) for Extensions · Issue #38894 · dart-lang/sdk (github.com)](https://github.com/dart-lang/sdk/issues/38894) , but still has many problems when developing in different ide.
 
 `ExtensionMemberContributor` help to handle extension member easily.
+
+
+## Pre-Commit
+
+### pre_commit.dart
+
+find `pre_commit.dart` base on following project tree, it's a demo to check errors before submit code.
+
+```
+├─ example
+│  ├─ custom_lint
+│  │  └─ tools
+│  │     └─ analyzer_plugin
+│  │        ├─ bin
+│  │        │  └─ pre_commit.dart
+```
+### pre-commit script
+
+run `candies_analyzer_plugin --pre-commit`, pre-commit script is generated under .git/hooks.
+
+and you can modify this script template by add a pre-commit file under your project.
+
+```
+├─ example
+│  ├─ pre-commit
+```
+
+{0} and {1} are placeholder, do not modify them.
+
+```
+#!/bin/sh
+
+# project path
+base_dir="{0}"
+
+dart format "$base_dir"
+
+# pre_commit.dart path
+pre_commit="{1}"
+ 
+echo "Checking the code before submit..."
+echo "Analyzing $base_dir..."
+
+info=$(dart "$pre_commit" "$base_dir")
+
+echo "$info"
+
+if [[ -n $info && $info != *"No issues found"* ]];then
+exit 1
+fi
+```
+
+when you are running `git commit` command to submit code, it will run under .git/hooks/pre-commit script first.
+and the script will call `example/custom_lint/tools/analyzer_plugin/bin/pre_commit.dart`, if there are errors, you should exit 1.
+
+you can modify `example/pre-commit` and `example/custom_lint/tools/analyzer_plugin/bin/pre_commit.dart` to custom your rule.
+
+### cacheErrorsIntoFile
+
+set `CandiesAnalyzerPlugin.cacheErrorsIntoFile` to true, to reduce the spent time to check error before submit code.
 
 ## Note 
 ### print lag

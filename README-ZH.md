@@ -44,6 +44,10 @@
   - [Completion](#completion)
     - [Make a custom completion](#make-a-custom-completion)
     - [扩展方法提示](#扩展方法提示)
+  - [Pre-Commit](#pre-commit)
+    - [pre\_commit.dart](#pre_commitdart)
+    - [pre-commit script](#pre-commit-script)
+    - [cacheErrorsIntoFile](#cacheerrorsintofile)
   - [注意事项](#注意事项)
     - [print lag](#print-lag)
     - [pubspec.yaml and analysis\_options.yaml](#pubspecyaml-and-analysis_optionsyaml)
@@ -105,7 +109,7 @@ analyzer:
    
    你想创建的插件叫做 `custom_lint`
    
-   执行命令 `candies_analyzer_plugin custom_lint`, 一个简单插件模板创建成功.
+   执行命令 `candies_analyzer_plugin --example custom_lint`, 一个简单插件模板创建成功.
 
 3. 将 `custom_lint` 增加到 根目录 `pubspec.yaml` 的 `dev_dependencies` 中
 
@@ -549,7 +553,7 @@ windows: `C:\Users\user_name\AppData\Local\.dartServer\.plugin_manager\`
 
 如果你的代码改变了, 请删除掉 `.plugin_manager` 下面的文件
 
-或者通过执行 `candies_analyzer_plugin clear_cache` 来删除 `.plugin_manager` 下面的文件. 
+或者通过执行 `candies_analyzer_plugin --clear-cache` 来删除 `.plugin_manager` 下面的文件. 
 
 
 1. 把新的代码写到 custom_lint 下面
@@ -840,6 +844,65 @@ class PreferTrailingComma extends DartLint {
 虽然官方已经关闭了这个问题 [Auto import (or quickfix?) for Extensions · Issue #38894 · dart-lang/sdk (github.com)](https://github.com/dart-lang/sdk/issues/38894) , 但是在不同的编辑器中依然有很多问题。
 
 `ExtensionMemberContributor` 帮助更好的处理扩展.
+
+## Pre-Commit
+
+### pre_commit.dart
+
+在下面的项目结构下面找到  `pre_commit.dart`  , 它是一个在提交代码前检查错误的例子
+
+```
+├─ example
+│  ├─ custom_lint
+│  │  └─ tools
+│  │     └─ analyzer_plugin
+│  │        ├─ bin
+│  │        │  └─ pre_commit.dart
+```
+### pre-commit script
+
+执行 `candies_analyzer_plugin --pre-commit`, pre-commit 脚本将被生成到 .git/hooks 中
+
+你可以通过增加以下文件，来自定这个脚本内容。
+
+```
+├─ example
+│  ├─ pre-commit
+```
+
+其中 {0} and {1} 是占位符，请勿修改.
+
+```
+#!/bin/sh
+
+# project path
+base_dir="{0}"
+
+dart format "$base_dir"
+
+# pre_commit.dart path
+pre_commit="{1}"
+ 
+echo "Checking the code before submit..."
+echo "Analyzing $base_dir..."
+
+info=$(dart "$pre_commit" "$base_dir")
+
+echo "$info"
+
+if [[ -n $info && $info != *"No issues found"* ]];then
+exit 1
+fi
+```
+
+当前通过 `git commit` 命令提交代码的时候, 会先执行 .git/hooks/pre-commit 脚本.
+而这个脚本会去调用 `example/custom_lint/tools/analyzer_plugin/bin/pre_commit.dart`, 如果有错误的话，请调用 exit 1。
+
+所以你可以通过修改 `example/pre-commit` 和 `example/custom_lint/tools/analyzer_plugin/bin/pre_commit.dart`  来定义你自己的检查规则。
+
+### cacheErrorsIntoFile
+
+将 `CandiesAnalyzerPlugin.cacheErrorsIntoFile` 为 true, 来减少提交代码之前检查错误的时间。
 
 ## 注意事项 
 ### print lag

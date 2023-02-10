@@ -2,7 +2,7 @@ part of 'plugin.dart';
 
 /// Put properties or methods not from [ServerPlugin] here.
 mixin CandiesAnalyzerPluginBase on ServerPlugin {
-  /// cache rrrors into file
+  /// cache errors into file
   bool get cacheErrorsIntoFile => false;
   static const String cacheErrorsFileName = '.candies_cache_error.log';
 
