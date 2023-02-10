@@ -356,8 +356,7 @@ class CandiesAnalyzerPluginConfig {
         //   }
         // }
         for (final AnalysisError error in errors) {
-          _sink!.writeln(
-              '${error.severity.name.toLowerCase()} • ${path_context.relative(error.location.file, from: context.root)}:${error.location.startLine}:${error.location.startColumn} • ${error.message} • ${error.code}\n');
+          _sink!.writeln('${error.toConsoleInfo(context.root)}\n');
         }
       }
     } else {

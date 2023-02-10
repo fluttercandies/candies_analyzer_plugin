@@ -5,7 +5,7 @@ import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/error/error.dart';
+import 'package:analyzer/error/error.dart' as error;
 import 'package:analyzer/source/error_processor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:analyzer/source/source_range.dart';
@@ -13,6 +13,8 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart' hide Element;
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dart';
 import 'package:candies_analyzer_plugin/src/error/lints/lint.dart';
 import 'package:path/path.dart' as path;
+
+import 'ansi_code.dart';
 
 /// The extension for ResolvedUnitResult
 extension ResolvedUnitResultE on ResolvedUnitResult {
@@ -94,11 +96,11 @@ extension ErrorProcessorE on ErrorProcessor {
   AnalysisErrorSeverity getSeverity(CandyLint lint) {
     if (same(lint) && !filtered) {
       switch (severity) {
-        case ErrorSeverity.INFO:
+        case error.ErrorSeverity.INFO:
           return AnalysisErrorSeverity.INFO;
-        case ErrorSeverity.WARNING:
+        case error.ErrorSeverity.WARNING:
           return AnalysisErrorSeverity.WARNING;
-        case ErrorSeverity.ERROR:
+        case error.ErrorSeverity.ERROR:
           return AnalysisErrorSeverity.ERROR;
         default:
       }
@@ -142,4 +144,81 @@ extension SyntacticEntityE on SyntacticEntity {
       lineInfo.getLocation(offset).lineNumber;
 
   int endLineNumber(LineInfo lineInfo) => lineInfo.getLocation(end).lineNumber;
+}
+
+extension AnalysisErrorE on AnalysisError {
+  String toConsoleInfo(String root) {
+    final String link =
+        '${path.relative(location.file, from: root)}:${location.startLine}:${location.startColumn}';
+    return <String>[
+      severity.name.toLowerCase(),
+      link,
+      message,
+      code,
+    ].join(ErrorInfoE.separator);
+  }
+}
+
+extension ErrorInfoE on String {
+  static const String separator = ' - ';
+  String getHighlightErrorInfo() {
+    //    info - bin/pre_commit.dart:17:10 - The value of the local variable 'info' isn't used. Try removing the variable or using it. - unused_local_variable
+
+    final List<String> infos =
+        trim().split(separator).map((String e) => e.trim()).toList();
+    if (infos.length == 4) {
+      infos[1] = infos[1].wrapAnsiCode(
+        fontColor: AnsiCodeFontColor.blue,
+        consoleEffect: AnsiCodeEffect.underline,
+      );
+      infos[3] = infos[3].wrapAnsiCode(
+        fontColor: AnsiCodeFontColor.green,
+        consoleEffect: AnsiCodeEffect.highlight,
+      );
+
+      String severity = infos[0];
+      switch (severity) {
+        case 'error':
+          severity = severity.wrapAnsiCode(
+            fontColor: AnsiCodeFontColor.red,
+            consoleEffect: AnsiCodeEffect.highlight,
+          );
+          break;
+        case 'warning':
+          severity = severity.wrapAnsiCode(
+            fontColor: AnsiCodeFontColor.yellow,
+            consoleEffect: AnsiCodeEffect.highlight,
+          );
+          break;
+        case 'info':
+          break;
+        default:
+      }
+      infos[0] = severity;
+
+      return infos.join(separator);
+    }
+
+    return this;
+  }
+
+  List<String> getErrorsFromDartAnalyze() {
+    // Analyzing analyzer_plugin...
+
+    //   info - bin/pre_commit.dart:17:10 - The value of the local variable 'info' isn't used. Try removing the variable or using it. - unused_local_variable
+
+    // 1 issue found.
+
+    if (!contains('No issues found')) {
+      final List<String> lines = split('\n');
+      lines.removeWhere((String element) => element.trim().isEmpty);
+      if (lines.length > 2) {
+        lines.removeLast();
+        lines.removeAt(0);
+      }
+
+      return lines.map((String e) => e.trim()).toList();
+    }
+    return <String>[];
+  }
 }

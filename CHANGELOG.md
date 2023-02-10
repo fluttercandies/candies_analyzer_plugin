@@ -1,3 +1,8 @@
+## 4.0.3
+
+* add `create_pre_commit` command to create .git/hooks/pre-commit sh file
+* add `pre_commit.dart` to check errors before git commit.
+
 ## 4.0.2
 
 * support to cache errors into file.

@@ -27,6 +27,7 @@ export 'src/extension.dart';
 export 'src/ignore_info.dart';
 export 'src/log.dart';
 export 'src/config.dart';
+export 'src/ansi_code.dart';
 export 'src/error/error/dart.dart';
 export 'src/error/error/yaml.dart';
 export 'src/error/error/generic.dart';

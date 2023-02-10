@@ -14,6 +14,9 @@ void main(List<String> args) {
   if (arg == 'clear_cache') {
     clearPluginManagerCache();
     return;
+  } else if (arg == 'create_pre_commit') {
+    creatPreCommitSH();
+    return;
   }
 
   final String pluginName = arg;
@@ -57,6 +60,11 @@ void main(List<String> args) {
   debugFile.createSync(recursive: true);
   debugFile.writeAsStringSync(debugDemo);
 
+  final File preCommitFile =
+      File(path.join(analyzerPluginPath, 'bin', 'pre_commit.dart.dart'));
+  preCommitFile.createSync(recursive: true);
+  preCommitFile.writeAsStringSync(preCommitDemo);
+
   processRun(
     executable: 'dart',
     arguments: 'pub get',
@@ -93,6 +101,69 @@ void clearPluginManagerCache() {
       directory.deleteSync(recursive: true);
     }
   }
+}
+
+final String preCommitDartFile =
+    path.join('tools', 'analyzer_plugin', 'bin', 'pre_commit.dart');
+
+void creatPreCommitSH() {
+  final String gitRoot = processRun(
+    executable: 'git',
+    arguments: 'rev-parse --show-toplevel',
+    //runInShell: true,
+    printInfo: false,
+  ).trim();
+
+  final File preCommitSH =
+      File(path.join(gitRoot, '.git', 'hooks', 'pre-commit'));
+
+  final File? file = findPreCommitFile(Directory(gitRoot));
+  if (file != null) {
+    if (preCommitSH.existsSync()) {
+      preCommitSH.deleteSync();
+    }
+    preCommitSH.createSync();
+    final String source = Directory.current.path;
+    final File localConfig = File(path.join(source, 'pre-commit'));
+    String demo = preCommitSHDemo;
+    if (localConfig.existsSync()) {
+      demo = localConfig.readAsStringSync();
+    }
+    preCommitSH.writeAsString(
+      demo
+          .replaceAll(
+            '{0}',
+            source,
+          )
+          .replaceAll('{1}', file.path),
+    );
+    if (Platform.isMacOS) {
+      processRun(
+        executable: 'chmod',
+        arguments: '777 ${preCommitSH.path}',
+        printInfo: false,
+      );
+    }
+    print('${preCommitSH.path} has created');
+  } else {
+    print(
+        'not find pre_commit.dart, please run \'candies_analyzer_plugin plugin_name\' first.');
+  }
+}
+
+File? findPreCommitFile(Directory directory) {
+  for (final FileSystemEntity file in directory.listSync()) {
+    if (file is Directory && !path.basename(file.path).startsWith('.')) {
+      final File? dartFile = findPreCommitFile(file);
+      if (dartFile != null) {
+        return dartFile;
+      }
+    } else if (file is File && file.path.endsWith(preCommitDartFile)) {
+      return file;
+    }
+  }
+
+  return null;
 }
 
 const String pluginDemo = '''
@@ -470,6 +541,124 @@ Future<void> main(List<String> args) async {
 }
 ''';
 
+const String preCommitDemo = '''
+// ignore_for_file: dead_code
+
+import 'dart:io';
+import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
+import 'package:path/path.dart';
+
+import 'plugin.dart';
+
+Future<void> main(List<String> args) async {
+  final String workingDirectory =
+      args.isNotEmpty ? args.first : Directory.current.path;
+  final Stopwatch stopwatch = Stopwatch();
+  stopwatch.start();
+  // if false, analyze whole workingDirectory
+  const bool onlyAnalyzeDiffFiles = true;
+  final String gitRoot = CandiesAnalyzerPlugin.processRun(
+    executable: 'git',
+    arguments: 'rev-parse --show-toplevel',
+    workingDirectory: workingDirectory,
+  ).trim();
+  // find diff files.
+  final List<String> diff = CandiesAnalyzerPlugin.processRun(
+    executable: 'git',
+    arguments: 'diff --name-status',
+    throwException: false,
+    workingDirectory: workingDirectory,
+  ).trim().split('\n').where((String e) {
+    //M       CHANGELOG.md
+    //D       CHANGELOG.md
+    // ignore delete file
+
+    return e.toUpperCase().startsWith('M');
+  }).map((String e) {
+    return join(gitRoot, e.replaceFirst('M', '').trim());
+  }).toList();
+
+  // git ls-files --others --exclude-standard
+  final List<String> untracked = CandiesAnalyzerPlugin.processRun(
+    executable: 'git',
+    arguments: 'ls-files --others --exclude-standard',
+    throwException: false,
+    workingDirectory: workingDirectory,
+  )
+      .trim()
+      .split('\n')
+      .map((String e) => join(workingDirectory, e).trim())
+      .toList();
+
+  final List<String> analyzeFiles = <String>[...diff, ...untracked]
+      .where((String element) => element.startsWith(workingDirectory))
+      .toList();
+
+  if (analyzeFiles.isEmpty) {
+    stopwatch.stop();
+    return;
+  }
+
+  // get error from CandiesAnalyzerPlugin
+  final List<String> errors = await CandiesAnalyzerPlugin.getCandiesErrorInfos(
+    workingDirectory,
+    plugin,
+    diff: onlyAnalyzeDiffFiles ? analyzeFiles : null,
+  );
+
+  // get errors from dart analyze command
+  errors.addAll(CandiesAnalyzerPlugin.getErrorInfosFromDartAnalyze(
+    workingDirectory,
+    diff: onlyAnalyzeDiffFiles ? analyzeFiles : null,
+  ));
+  stopwatch.stop();
+
+  _printErrors(errors, stopwatch.elapsed.inMilliseconds);
+}
+
+void _printErrors(List<String> errors, int inMilliseconds) {
+  final String seconds = (inMilliseconds / 1000).toStringAsFixed(2);
+  if (errors.isEmpty) {
+    print('No issues found!  \${seconds}s');
+  } else {
+    print('');
+    print(errors
+        .map((String e) => '  \${e.getHighlightErrorInfo()}')
+        .join('\n\n'));
+    print('\n\${errors.length} issues found.'.wrapAnsiCode(
+          fontColor: AnsiCodeFontColor.red,
+          consoleEffect: AnsiCodeEffect.highlight,
+        ) +
+        '  \${seconds}s');
+  }
+}
+
+''';
+
+const String preCommitSHDemo = '''
+#!/bin/sh
+
+# project path, {0} is placeholder
+base_dir="{0}"
+
+dart format "\$base_dir"
+
+# pre_commit.dart path, {1} is placeholder
+pre_commit="{1}"
+errorInfo="Please fix the errors and then submit the code."
+echo "\\033[32;1mChecking the code before submit...\\033[0m"
+echo "\\033[32;1mAnalyzing \$base_dir...\\033[0m"
+
+info=\$(dart "\$pre_commit" "\$base_dir")
+
+echo "\$info"
+
+if [[ -n \$info && \$info != *"No issues found"* ]];then
+echo "\\033[31;1m\$errorInfo\\033[0m"
+exit 1
+fi
+''';
+
 String processRun({
   required String executable,
   String? arguments,
@@ -478,6 +667,7 @@ String processRun({
   List<String>? argumentsList,
   Encoding? stdoutEncoding = systemEncoding,
   Encoding? stderrEncoding = systemEncoding,
+  bool printInfo = true,
 }) {
   final List<String> temp = <String>[];
 
@@ -489,8 +679,9 @@ String processRun({
   if (argumentsList != null) {
     temp.addAll(argumentsList);
   }
-
-  print(yellow.wrap('$executable $temp'));
+  if (printInfo) {
+    print(yellow.wrap('$executable $temp'));
+  }
   final ProcessResult result = Process.runSync(
     executable,
     temp,
@@ -504,8 +695,9 @@ String processRun({
   }
 
   final String stdout = result.stdout.toString();
-
-  print(green.wrap('stdout: $stdout\n'));
+  if (printInfo) {
+    print(green.wrap('stdout: $stdout\n'));
+  }
 
   return stdout;
 }

@@ -453,4 +453,111 @@ class CandiesAnalyzerPlugin extends ServerPlugin
     }
     return await super.handleAnalysisHandleWatchEvents(parameters);
   }
+
+  static String processRun({
+    required String executable,
+    required String arguments,
+    bool runInShell = false,
+    String? workingDirectory,
+    List<String>? argumentList,
+    bool throwException = true,
+  }) {
+    final ProcessResult result = Process.runSync(
+      executable,
+      argumentList ?? arguments.split(' '),
+      runInShell: runInShell,
+      workingDirectory: workingDirectory,
+    );
+    if (result.exitCode != 0 && throwException) {
+      throw Exception(result.stderr);
+    }
+    //print('${result.stdout}\n');
+    return '${result.stdout}';
+  }
+
+  static List<String> getErrorInfosFromDartAnalyze(
+    String workingDirectory, {
+    Iterable<String>? analyzeFiles,
+  }) {
+    return processRun(
+      executable: 'dart',
+      arguments: 'analyze' +
+          (analyzeFiles != null ? ' ' + analyzeFiles.join(' ') : ''),
+      workingDirectory: workingDirectory,
+      throwException: false,
+    ).getErrorsFromDartAnalyze();
+  }
+
+  static Future<List<String>> getCandiesErrorInfos(
+    String workingDirectory,
+    CandiesAnalyzerPlugin plugin, {
+    Iterable<String>? analyzeFiles,
+  }) async {
+    final File file = File(path_package.join(
+        workingDirectory, CandiesAnalyzerPluginBase.cacheErrorsFileName));
+    if (file.existsSync()) {
+      final String content = file.readAsStringSync().trim();
+      if (content.isNotEmpty) {
+        final List<String> errors = content
+            .split('\n')
+            .where((String element) => element.trim().isNotEmpty)
+            .toList();
+
+        if (errors.isNotEmpty) {
+          errors.removeAt(0);
+          return errors;
+        }
+      } else {
+        return <String>[];
+      }
+    }
+
+    final List<String> includedPaths = <String>[
+      if (analyzeFiles != null) ...analyzeFiles else workingDirectory,
+    ];
+
+    final AnalysisContextCollection collection =
+        AnalysisContextCollection(includedPaths: includedPaths);
+    final List<AnalysisError> errors = <AnalysisError>[];
+
+    for (final AnalysisContext context in collection.contexts) {
+      final CandiesAnalyzerPluginConfig config = plugin.configs.putIfAbsent(
+          context.root,
+          () => CandiesAnalyzerPluginConfig(
+                context: context,
+                pluginName: plugin.name,
+                dartLints: plugin.dartLints,
+                astVisitor: plugin.astVisitor,
+                yamlLints: plugin.yamlLints,
+                genericLints: plugin.genericLints,
+              ));
+
+      if (!config.shouldAnalyze) {
+        continue;
+      }
+      for (final String file in context.contextRoot.analyzedFiles()) {
+        //var errors = await context.currentSession.getErrors(file);
+
+        if (!config.include(file)) {
+          continue;
+        }
+        if (!plugin.shouldAnalyzeFile(file, context)) {
+          continue;
+        }
+
+        final bool isAnalyzed = context.contextRoot.isAnalyzed(file);
+        if (!isAnalyzed) {
+          continue;
+        }
+
+        errors.addAll(await plugin.getAnalysisErrorsForDebug(
+          file,
+          context,
+        ));
+      }
+    }
+    return errors
+        .map((AnalysisError e) => e.toConsoleInfo(workingDirectory))
+        .toList();
+  }
 }
