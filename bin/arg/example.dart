@@ -461,7 +461,7 @@ Future<void> main(List<String> args) async {
   final Stopwatch stopwatch = Stopwatch();
   stopwatch.start();
   // if false, analyze whole workingDirectory
-  const bool onlyAnalyzeDiffFiles = true;
+  const bool onlyAnalyzeChangedFiles = true;
   final String gitRoot = CandiesAnalyzerPlugin.processRun(
     executable: 'git',
     arguments: 'rev-parse --show-toplevel',
@@ -499,7 +499,7 @@ Future<void> main(List<String> args) async {
       .where((String element) => element.startsWith(workingDirectory))
       .toList();
 
-  if (analyzeFiles.isEmpty) {
+  if (onlyAnalyzeChangedFiles && analyzeFiles.isEmpty) {
     stopwatch.stop();
     return;
   }
@@ -508,13 +508,13 @@ Future<void> main(List<String> args) async {
   final List<String> errors = await CandiesAnalyzerPlugin.getCandiesErrorInfos(
     workingDirectory,
     plugin,
-    analyzeFiles: onlyAnalyzeDiffFiles ? analyzeFiles : null,
+    analyzeFiles: onlyAnalyzeChangedFiles ? analyzeFiles : null,
   );
 
   // get errors from dart analyze command
   errors.addAll(CandiesAnalyzerPlugin.getErrorInfosFromDartAnalyze(
     workingDirectory,
-    analyzeFiles: onlyAnalyzeDiffFiles ? analyzeFiles : null,
+    analyzeFiles: onlyAnalyzeChangedFiles ? analyzeFiles : null,
   ));
   stopwatch.stop();
 

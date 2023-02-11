@@ -1,3 +1,7 @@
+## 5.0.1
+
+* `pre_commit.dart` add onlyAnalyzeChangedFiles judgement
+
 ## 5.0.0
 
 * breaking change: use new commands.
