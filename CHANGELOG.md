@@ -1,3 +1,6 @@
+## 5.0.2
+
+* fix error at `pre_commit.dart` in example
 ## 5.0.1
 
 * `pre_commit.dart` add onlyAnalyzeChangedFiles judgement

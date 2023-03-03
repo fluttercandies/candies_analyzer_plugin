@@ -473,7 +473,7 @@ Future<void> main(List<String> args) async {
     arguments: 'diff --name-status',
     throwException: false,
     workingDirectory: workingDirectory,
-  ).trim().split('\n').where((String e) {
+  ).trim().split('\\n').where((String e) {
     //M       CHANGELOG.md
     //D       CHANGELOG.md
     // ignore delete file
@@ -491,7 +491,7 @@ Future<void> main(List<String> args) async {
     workingDirectory: workingDirectory,
   )
       .trim()
-      .split('\n')
+      .split('\\n')
       .map((String e) => join(workingDirectory, e).trim())
       .toList();
 
@@ -529,10 +529,9 @@ void _printErrors(List<String> errors, int inMilliseconds) {
     print('');
     print(errors
         .map((String e) => '  \${e.getHighlightErrorInfo()}')
-        .join('\n\n'));
-    print('\n\${errors.length} issues found.'
-            .wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.red) +
-        '  \${seconds}s');
+        .join('\\n\\n'));
+    print('\${'\\n\${errors.length} issues found.'
+            .wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.red)}  \${seconds}s');
     print('Please fix the errors and then submit the code.'
         .wrapAnsiCode(foregroundColor: AnsiCodeForegroundColor.red));
   }
