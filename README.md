@@ -1,6 +1,6 @@
 # candies_analyzer_plugin
 
-[![pub package](https://img.shields.io/pub/v/candies_analyzer_plugin.svg)](https://pub.dartlang.org/packages/candies_analyzer_plugin) [![GitHub stars](https://img.shields.io/github/stars/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/stargazers) [![GitHub forks](https://img.shields.io/github/forks/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/network) [![GitHub license](https://img.shields.io/github/license/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/issues) <a target="_blank" href="https://jq.qq.com/?_wv=1027&k=5bcc0gy"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="flutter-candies" title="flutter-candies"></a>
+[![pub package](https://img.shields.io/pub/v/candies_analyzer_plugin.svg)](https://pub.dartlang.org/packages/candies_analyzer_plugin) [![GitHub stars](https://img.shields.io/github/stars/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/stargazers) [![GitHub forks](https://img.shields.io/github/forks/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/network) [![GitHub license](https://img.shields.io/github/license/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/fluttercandies/candies_analyzer_plugin)](https://github.com/fluttercandies/candies_analyzer_plugin/issues) <a href="https://qm.qq.com/q/ZyJbSVjfSU"><img src="https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Ffluttercandies%2F.github%2Frefs%2Fheads%2Fmain%2Fdata.yml&query=%24.qq_group_number&style=for-the-badge&label=QQ%E7%BE%A4&logo=qq&color=1DACE8" /></a>
 
 Languages: English | [中文简体](README-ZH.md)
 
@@ -195,23 +195,23 @@ you just need to make a custom lint which extends from  `DartLint` ,`YamlLint`, 
 
 Properties: 
 
-| Property | Description  | Default |
-| --- | --- | --- |
-| code | The name, as a string, of the error code associated with this error. | required | 
-| message | The message to be displayed for this error. The message should indicate what is wrong with the code and why it is wrong. | required | 
-| url | The URL of a page containing documentation associated with this error. |  | 
-| type | The type of the error. <br/>CHECKED_MODE_COMPILE_TIME_ERROR<br/>COMPILE_TIME_ERROR<br/>HINT<br/>LINT<br/>STATIC_TYPE_WARNING<br/>STATIC_WARNING<br/>SYNTACTIC_ERROR<br/>TODO | The default is LINT. | 
-| severity | The severity of the error.<br/>INFO<br/>WARNING<br/>ERROR | The default is INFO. | 
-| correction | The correction message to be displayed for this error. The correction message should indicate how the user can fix the error. The field is omitted if there is no correction message associated with the error code. |  | 
-| contextMessages | Additional messages associated with this diagnostic that provide context to help the user understand the diagnostic. |  | 
+| Property        | Description                                                                                                                                                                                                          | Default              |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| code            | The name, as a string, of the error code associated with this error.                                                                                                                                                 | required             |
+| message         | The message to be displayed for this error. The message should indicate what is wrong with the code and why it is wrong.                                                                                             | required             |
+| url             | The URL of a page containing documentation associated with this error.                                                                                                                                               |                      |
+| type            | The type of the error. <br/>CHECKED_MODE_COMPILE_TIME_ERROR<br/>COMPILE_TIME_ERROR<br/>HINT<br/>LINT<br/>STATIC_TYPE_WARNING<br/>STATIC_WARNING<br/>SYNTACTIC_ERROR<br/>TODO                                         | The default is LINT. |
+| severity        | The severity of the error.<br/>INFO<br/>WARNING<br/>ERROR                                                                                                                                                            | The default is INFO. |
+| correction      | The correction message to be displayed for this error. The correction message should indicate how the user can fix the error. The field is omitted if there is no correction message associated with the error code. |                      |
+| contextMessages | Additional messages associated with this diagnostic that provide context to help the user understand the diagnostic.                                                                                                 |                      |
 
 
 Important methodes:
 
-| Method | Description  | Override |
-| --- | --- | --- |
-| matchLint | return whether is match lint. | must | 
-| getDartFixes/getYamlFixes/getGenericFixes | return fixes if has. | getYamlFixes/getGenericFixes doesn't work for now, leave it in case dart team maybe support it someday in the future, see [issue](https://github.com/dart-lang/sdk/issues/50306)  | 
+| Method                                    | Description                   | Override                                                                                                                                                                         |
+| ----------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| matchLint                                 | return whether is match lint. | must                                                                                                                                                                             |
+| getDartFixes/getYamlFixes/getGenericFixes | return fixes if has.          | getYamlFixes/getGenericFixes doesn't work for now, leave it in case dart team maybe support it someday in the future, see [issue](https://github.com/dart-lang/sdk/issues/50306) |
 
 
 #### dart lint
